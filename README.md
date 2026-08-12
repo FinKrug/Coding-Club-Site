@@ -1,4 +1,11 @@
 # Coding-Club-Site
+
+One of my current passion projects is developing the Coding Club website. This project is still a work in progress, but its main goal is to create an engaging and accessible platform that encourages more people to learn programming and explore the world of technology.
+ 
+Through this website, I aim to provide resources, project showcases, event information, and opportunities for members to collaborate and grow their technical skills. I want the platform to make coding feel approachable for beginners while also giving experienced programmers a place to connect, share ideas, and build exciting projects together.
+ 
+As development continues, I plan to expand the site's features and content based on community feedback. Ultimately, my vision is for the website to inspire curiosity, foster creativity, and help more people discover the fun and rewarding experience of coding.
+
 # Getting This Website Running
 
 Welcome! If you've never worked with a website project before, don't worry. Follow the steps below and you'll have the site running on your computer.
