@@ -1,6 +1,8 @@
-import { useParams } from "react-router-dom";
+"use client";
+
+import { useParams } from "next/navigation";
 import { useState } from "react";
-import problems from "../data/problemData";
+import problems from "@/data/problemData";
 
 const languages = [
   { id: 71, name: "Python 3" },
@@ -13,7 +15,7 @@ const languages = [
   { id: 74, name: "TypeScript" }
 ];
 
-function ProblemPage() {
+export default function ProblemPage() {
   const { id } = useParams();
 
   const problem = problems.find(
@@ -35,7 +37,7 @@ function ProblemPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/run",
+        "/api/run",
         {
           method: "POST",
 
@@ -158,5 +160,3 @@ function ProblemPage() {
     </div>
   );
 }
-
-export default ProblemPage;

@@ -12,21 +12,27 @@ pids
 *.seed
 *.pid.lock
 
-# Build outputs
+# Next.js build outputs
+.next/
+out/
 build/
 dist/
-out/
-.next/
+
+# Cloudflare / OpenNext
+.open-next/
+.wrangler/
 .vercel/
 .netlify/
-.storybook-static/
+cloudflare-env.d.ts
 
-# React specific
-ActualSite/server/.env
-ActualSite\server\.env.local
-ActualSite\server\.env.development.local
-ActualSite\server\.env.test.local
-ActualSite\server\.env.production.local
+# Environment variables - never commit secrets
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.dev.vars
+.dev.vars*
 
 # Testing
 coverage/
@@ -64,3 +70,7 @@ logs
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

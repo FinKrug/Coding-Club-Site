@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "coding-club-site",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-05",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "vars": {
+    "JUDGE0_URL": "https://ce.judge0.com"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

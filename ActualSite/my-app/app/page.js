@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
-function Home() {
+export default function Home() {
   return (
     <div className="container">
 
@@ -11,7 +11,7 @@ function Home() {
           Learn. Build. Compete.
         </p>
 
-        <Link to="/problems">
+        <Link href="/problems">
           <button>
             View Challenges
           </button>
@@ -41,5 +41,3 @@ function Home() {
     </div>
   );
 }
-
-export default Home;
