@@ -22,7 +22,7 @@ out/
 .storybook-static/
 
 # React specific
-ActualSite\server\.env
+ActualSite/server/.env
 ActualSite\server\.env.local
 ActualSite\server\.env.development.local
 ActualSite\server\.env.test.local
