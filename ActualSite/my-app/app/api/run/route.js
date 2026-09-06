@@ -29,7 +29,8 @@ export async function POST(request) {
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "X-Auth-Token": process.env.JUDGE0_AUTH_TOKEN
         },
         body: JSON.stringify({
           source_code: code,

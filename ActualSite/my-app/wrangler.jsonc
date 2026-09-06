@@ -9,7 +9,7 @@
     "binding": "ASSETS"
   },
   "vars": {
-    "JUDGE0_URL": "https://ce.judge0.com"
+    "JUDGE0_URL": "https://judge0.neumontcoding.club"
   },
   "observability": {
     "enabled": true
