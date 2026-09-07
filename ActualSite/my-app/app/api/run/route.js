@@ -23,6 +23,7 @@ export async function POST(request) {
     }
 
     const judge0Url = process.env.JUDGE0_URL;
+    const judge0AuthToken = process.env.JUDGE0_AUTH_TOKEN;
 
     const response = await fetch(
       `${judge0Url}/submissions?base64_encoded=false&wait=true`,
@@ -30,7 +31,7 @@ export async function POST(request) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Auth-Token": process.env.JUDGE0_AUTH_TOKEN
+          ...(judge0AuthToken ? { "X-Auth-Token": judge0AuthToken } : {})
         },
         body: JSON.stringify({
           source_code: code,

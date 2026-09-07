@@ -59,15 +59,23 @@ export default function ProblemPage() {
         setOutput(result.compile_output);
       } else if (result.stderr) {
         setOutput(result.stderr);
+      } else if (result.error) {
+        setOutput(
+          `Error: ${result.error}${result.details ? `\n\nDetails: ${result.details}` : ""}`
+        );
+      } else if (result.stdout) {
+        setOutput(result.stdout);
       } else {
-        setOutput(result.stdout || "No output.");
+        setOutput(
+          `No output. (HTTP ${response.status}, raw response: ${JSON.stringify(result)})`
+        );
       }
 
     } catch (error) {
       console.error(error);
 
       setOutput(
-        "Could not connect to compiler server."
+        `Could not connect to compiler server. (${error.message})`
       );
     }
 
