@@ -25,8 +25,11 @@ export async function POST(request) {
     const judge0Url = process.env.JUDGE0_URL;
     const judge0AuthToken = process.env.JUDGE0_AUTH_TOKEN;
 
+    // Encode as base64 so that any character a keyboard or autocorrect
+    // introduces (smart quotes, em dashes, emoji, etc.) is transmitted
+    // safely, regardless of device.
     const response = await fetch(
-      `${judge0Url}/submissions?base64_encoded=false&wait=true`,
+      `${judge0Url}/submissions?base64_encoded=true&wait=true`,
       {
         method: "POST",
         headers: {
@@ -34,9 +37,9 @@ export async function POST(request) {
           ...(judge0AuthToken ? { "X-Auth-Token": judge0AuthToken } : {})
         },
         body: JSON.stringify({
-          source_code: code,
+          source_code: Buffer.from(code, "utf-8").toString("base64"),
           language_id: languageId,
-          stdin,
+          stdin: Buffer.from(stdin, "utf-8").toString("base64"),
 
           // Safety limits
           cpu_time_limit: 2,
@@ -56,7 +59,23 @@ export async function POST(request) {
     }
 
     const result = await response.json();
-    return Response.json(result);
+
+    const decodeField = (value) => {
+      if (!value) return value;
+      try {
+        return Buffer.from(value, "base64").toString("utf-8");
+      } catch {
+        return value;
+      }
+    };
+
+    return Response.json({
+      ...result,
+      stdout: decodeField(result.stdout),
+      stderr: decodeField(result.stderr),
+      compile_output: decodeField(result.compile_output),
+      message: decodeField(result.message)
+    });
 
   } catch (error) {
     console.error("Compiler error:", error);
