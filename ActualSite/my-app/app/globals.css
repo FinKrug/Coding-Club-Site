@@ -67,6 +67,21 @@ textarea {
   padding: 1rem;
 }
 
+.monaco-container {
+  width: 100%;
+  margin: 1rem 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #444;
+}
+
+.lsp-status {
+  font-size: 0.8rem;
+  color: #999;
+  margin: 0.25rem 0 0.75rem;
+  font-style: italic;
+}
+
 button {
   padding: 10px 20px;
   margin-top: 1rem;

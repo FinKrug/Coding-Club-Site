@@ -1,19 +1,37 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import dynamic from "next/dynamic";
 import problems from "@/data/problemData";
+import { connectLanguageServer, languageNeedsBackend } from "@/lib/lspClient";
+
+const MonacoEditor = dynamic(
+  () => import("@monaco-editor/react"),
+  {
+    ssr: false,
+    loading: () => <p>Loading editor...</p>
+  }
+);
 
 const languages = [
-  { id: 71, name: "Python 3" },
-  { id: 63, name: "JavaScript" },
-  { id: 62, name: "Java" },
-  { id: 54, name: "C++" },
-  { id: 50, name: "C" },
-  { id: 73, name: "Rust" },
-  { id: 60, name: "Go" },
-  { id: 74, name: "TypeScript" }
+  { id: 71, name: "Python 3", monacoLanguage: "python" },
+  { id: 63, name: "JavaScript", monacoLanguage: "javascript" },
+  { id: 62, name: "Java", monacoLanguage: "java" },
+  { id: 54, name: "C++", monacoLanguage: "cpp" },
+  { id: 50, name: "C", monacoLanguage: "c" },
+  { id: 73, name: "Rust", monacoLanguage: "rust" },
+  { id: 60, name: "Go", monacoLanguage: "go" },
+  { id: 74, name: "TypeScript", monacoLanguage: "typescript" }
 ];
+
+const STATUS_LABELS = {
+  "not-applicable": "Built-in IntelliSense active",
+  connecting: "IntelliSense: connecting…",
+  connected: "IntelliSense: connected",
+  disconnected: "IntelliSense: disconnected, retrying…",
+  error: "IntelliSense: connection error, retrying…"
+};
 
 export default function ProblemPage() {
   const { id } = useParams();
@@ -26,10 +44,46 @@ export default function ProblemPage() {
   const [languageId, setLanguageId] = useState(71);
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [editorReady, setEditorReady] = useState(false);
+  const [lspStatus, setLspStatus] = useState("connecting");
+
+  const editorRef = useRef(null);
+  const monacoRef = useRef(null);
 
   if (!problem) {
     return <h2>Problem Not Found</h2>;
   }
+
+  const currentLanguage = languages.find(
+    l => l.id === languageId
+  );
+
+  function handleEditorDidMount(editor, monaco) {
+    editorRef.current = editor;
+    monacoRef.current = monaco;
+    setEditorReady(true);
+  }
+
+  useEffect(() => {
+    if (!editorReady || !editorRef.current || !monacoRef.current) return;
+
+    const model = editorRef.current.getModel();
+    if (!model) return;
+
+    const lang = currentLanguage?.monacoLanguage;
+
+    const client = connectLanguageServer({
+      monaco: monacoRef.current,
+      model,
+      lang,
+      onStatusChange: setLspStatus
+    });
+
+    return () => {
+      client.dispose();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorReady, languageId]);
 
   async function runCode() {
     setLoading(true);
@@ -137,18 +191,27 @@ export default function ProblemPage() {
 
         </select>
 
-        <textarea
-          rows="20"
-          value={code}
-          onChange={(e) =>
-            setCode(e.target.value)
-          }
-          placeholder="Write your solution here..."
-          autoCorrect="off"
-          autoCapitalize="off"
-          autoComplete="off"
-          spellCheck={false}
-        />
+        <div className="monaco-container">
+          <MonacoEditor
+            height="500px"
+            language={currentLanguage?.monacoLanguage || "plaintext"}
+            value={code}
+            onChange={(value) => setCode(value || "")}
+            onMount={handleEditorDidMount}
+            theme="vs-dark"
+            options={{
+              minimap: { enabled: false },
+              fontSize: 14,
+              automaticLayout: true,
+              scrollBeyondLastLine: false,
+              tabSize: 4
+            }}
+          />
+        </div>
+
+        <div className="lsp-status">
+          {STATUS_LABELS[lspStatus] || ""}
+        </div>
 
         <button
           onClick={runCode}
