@@ -144,6 +144,10 @@ export default function ProblemPage() {
             setCode(e.target.value)
           }
           placeholder="Write your solution here..."
+          autoCorrect="off"
+          autoCapitalize="off"
+          autoComplete="off"
+          spellCheck={false}
         />
 
         <button
