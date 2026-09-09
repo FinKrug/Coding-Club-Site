@@ -6,7 +6,7 @@ Through this website, I aim to provide resources, project showcases, event infor
 
 As development continues, I plan to expand the site's features and content based on community feedback. Ultimately, my vision is for the website to inspire curiosity, foster creativity, and help more people discover the fun and rewarding experience of coding.
 
-The site is a [Next.js](https://nextjs.org) app (`ActualSite/my-app`) deployed to [Cloudflare Workers](https://workers.cloudflare.com/) using the [OpenNext](https://opennext.js.org/cloudflare) adapter. The code runner talks to a public [Judge0](https://judge0.com/) instance through a Next.js API route (`app/api/run`), so there's no separate backend server to run or deploy anymore.
+The site is a [Next.js](https://nextjs.org) app (`ActualSite/my-app`) deployed to [Cloudflare Workers](https://workers.cloudflare.com/) using the [OpenNext](https://opennext.js.org/cloudflare) adapter. The code runner talks to a self-hosted [Judge0](https://judge0.com/) instance through a Next.js API route (`app/api/run`). IntelliSense (real completions/diagnostics, not just Monaco's built-ins) is served by `lsp-gateway/`, a small WebSocket gateway in front of per-language language servers. Anyone using the site can also opt out of both hosted services from the site's own Run Settings panel and point it at a Judge0 + lsp-gateway running in Docker on their own machine instead — see `local-dev-tools/README.md`.
 
 # Getting This Website Running
 
@@ -72,13 +72,20 @@ This downloads everything the website needs to run. The first install may take a
 
 # Step 5: Environment Variables
 
-The app needs one environment variable, `JUDGE0_URL` (the compiler API it calls). Copy the example below into a new `.env.local` file in `ActualSite/my-app` (this file is git-ignored and never committed):
+The app needs an environment variable, `JUDGE0_URL` (the compiler API it calls), in a new `.env.local` file in `ActualSite/my-app` (this file is git-ignored and never committed). The easiest option for local development, since it needs no shared secrets, is to point it at a Judge0 you run yourself in Docker — see "Running Your Own Compiler Backend Locally" below — and use:
 
 ```bash
-JUDGE0_URL=https://ce.judge0.com
+JUDGE0_URL=http://localhost:2358
 ```
 
-A `.dev.vars` file with the same value is also used when previewing through Wrangler (see below) — it's git-ignored too.
+Alternatively, if you have access to the real self-hosted instance, you can point at it directly, but it requires an auth token as well (ask a maintainer for `JUDGE0_AUTH_TOKEN` — never commit it):
+
+```bash
+JUDGE0_URL=https://judge0.neumontcoding.club
+JUDGE0_AUTH_TOKEN=<ask a maintainer>
+```
+
+A `.dev.vars` file with the same values is also used when previewing through Wrangler (see below) — it's git-ignored too.
 
 ---
 
@@ -105,10 +112,17 @@ Most of the website code lives in:
 ```text
 app/         - pages and API routes (App Router)
 components/  - shared React components
-data/        - static problem data
+lib/         - client-side helpers (code runner, IntelliSense, Run Settings)
+data/        - problem and resources content
 ```
 
 When you edit files and save them, the browser will automatically refresh and show your changes.
+
+---
+
+# Running Your Own Compiler Backend Locally
+
+If you'd rather run code against a Judge0 instance (and get real IntelliSense) on your own machine instead of our hosted servers, the site's own **Resources** page (`/resources`) has a one-click download of everything needed (Docker Compose setup + config + the IntelliSense source, no repo clone required) plus setup steps. The same files live in this repo under `local-dev-tools/` if you'd rather browse them here — `local-dev-tools/README.md` has the full walkthrough and troubleshooting guide. The downloadable zip is generated automatically from `local-dev-tools/` and `lsp-gateway/` by `ActualSite/my-app/scripts/build-local-dev-tools-zip.js`, which runs before every `dev`/`build`/`preview`/`deploy`, so it never goes stale — there's nothing to update by hand when either folder changes.
 
 ---
 

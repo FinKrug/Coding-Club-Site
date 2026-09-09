@@ -1,24 +1,28 @@
 import Link from "next/link";
+import problems from "@/data/problemData";
 
-const weeks = [
-  {
-    week: "Week 1",
-    challenges: [
-      {
-        id: 1,
-        title: "Reverse String",
-        difficulty: "Easy"
-      },
-      {
-        id: 2,
-        title: "Two Sum",
-        difficulty: "Medium"
-      }
-    ]
+// Groups the flat problems array into the { week, challenges } shape this
+// page renders, in first-seen week order. A problem with no `week` field
+// falls into "Week 1".
+function groupByWeek(items) {
+  const weeks = [];
+  const weekIndex = new Map();
+
+  for (const problem of items) {
+    const label = problem.week || "Week 1";
+    if (!weekIndex.has(label)) {
+      weekIndex.set(label, weeks.length);
+      weeks.push({ week: label, challenges: [] });
+    }
+    weeks[weekIndex.get(label)].challenges.push(problem);
   }
-];
+
+  return weeks;
+}
 
 export default function Problems() {
+  const weeks = groupByWeek(problems);
+
   return (
     <div className="container">
       <h1>Weekly Challenges</h1>
@@ -35,11 +39,15 @@ export default function Problems() {
             >
               <h3>{problem.title}</h3>
 
-              <p>{problem.difficulty}</p>
+              <span className={`difficulty-badge ${problem.difficulty.toLowerCase()}`}>
+                {problem.difficulty}
+              </span>
 
-              <Link href={`/problems/${problem.id}`}>
-                Open Problem
-              </Link>
+              <div>
+                <Link href={`/problems/${problem.id}`}>
+                  Open Problem →
+                </Link>
+              </div>
             </div>
           ))}
 

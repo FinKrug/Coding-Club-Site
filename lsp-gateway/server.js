@@ -155,6 +155,15 @@ function cleanupWorkspace(workspaceDir) {
 }
 
 const server = http.createServer((req, res) => {
+  // CORS-open, same posture as the bundled Judge0 (see local-dev-tools/judge0.conf):
+  // the browser calls this gateway directly from whatever origin the site is
+  // served from (a Cloudflare domain, localhost:3000 in dev, etc), so the
+  // response needs this header or the browser discards it before the site's
+  // "Test connection" check (or anything else hitting this over plain HTTP)
+  // ever sees it — this was the actual cause behind a "healthy" gateway
+  // still showing "Unreachable" in Run Settings.
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   // Simple health check so we can confirm the gateway is up without a
   // WebSocket client.
   if (req.url === "/health") {

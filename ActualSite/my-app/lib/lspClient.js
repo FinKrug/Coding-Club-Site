@@ -6,7 +6,9 @@
 // (whose API has shifted significantly across versions and pulls in a full
 // VS Code service emulation layer) in favor of something small and direct.
 
-const LSP_GATEWAY_HOST = "wss://lsp.neumontcoding.club";
+// Hosted gateway, used unless the visitor has pointed the site at a
+// gateway of their own (see Run Settings / lib/runnerSettings.js).
+const DEFAULT_LSP_GATEWAY_HOST = "wss://lsp.neumontcoding.club";
 
 // Languages that need a real backend language server. JS/TS are excluded —
 // Monaco's built-in worker already provides full IntelliSense for those
@@ -81,7 +83,7 @@ function severityToMonaco(monaco, lspSeverity) {
 // server, registering Monaco providers scoped to that language. Returns a
 // handle with dispose() to tear everything down (call this before
 // connecting a new language, and on unmount).
-export function connectLanguageServer({ monaco, model, lang, onStatusChange }) {
+export function connectLanguageServer({ monaco, model, lang, onStatusChange, gatewayUrl }) {
   if (!languageNeedsBackend(lang)) {
     onStatusChange?.("not-applicable");
     return { dispose() {} };
@@ -149,7 +151,8 @@ export function connectLanguageServer({ monaco, model, lang, onStatusChange }) {
 
   function connect() {
     onStatusChange?.("connecting");
-    ws = new WebSocket(`${LSP_GATEWAY_HOST}/?lang=${encodeURIComponent(lang)}`);
+    const gatewayHost = (gatewayUrl || DEFAULT_LSP_GATEWAY_HOST).replace(/\/$/, "");
+    ws = new WebSocket(`${gatewayHost}/?lang=${encodeURIComponent(lang)}`);
 
     ws.addEventListener("open", async () => {
       try {

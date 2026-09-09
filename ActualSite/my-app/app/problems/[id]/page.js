@@ -4,7 +4,9 @@ import { useParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import problems from "@/data/problemData";
-import { connectLanguageServer, languageNeedsBackend } from "@/lib/lspClient";
+import { connectLanguageServer } from "@/lib/lspClient";
+import { runCode } from "@/lib/judge0Client";
+import { getRunnerSettings, subscribeRunnerSettings } from "@/lib/runnerSettings";
 
 const MonacoEditor = dynamic(
   () => import("@monaco-editor/react"),
@@ -46,9 +48,15 @@ export default function ProblemPage() {
   const [loading, setLoading] = useState(false);
   const [editorReady, setEditorReady] = useState(false);
   const [lspStatus, setLspStatus] = useState("connecting");
+  const [settings, setSettings] = useState(null);
 
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
+
+  useEffect(() => {
+    setSettings(getRunnerSettings());
+    return subscribeRunnerSettings(setSettings);
+  }, []);
 
   if (!problem) {
     return <h2>Problem Not Found</h2>;
@@ -65,17 +73,19 @@ export default function ProblemPage() {
   }
 
   useEffect(() => {
-    if (!editorReady || !editorRef.current || !monacoRef.current) return;
+    if (!editorReady || !editorRef.current || !monacoRef.current || !settings) return;
 
     const model = editorRef.current.getModel();
     if (!model) return;
 
     const lang = currentLanguage?.monacoLanguage;
+    const gatewayUrl = settings.useLocalLsp ? settings.localLspUrl : undefined;
 
     const client = connectLanguageServer({
       monaco: monacoRef.current,
       model,
       lang,
+      gatewayUrl,
       onStatusChange: setLspStatus
     });
 
@@ -83,31 +93,19 @@ export default function ProblemPage() {
       client.dispose();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editorReady, languageId]);
+  }, [editorReady, languageId, settings?.useLocalLsp, settings?.localLspUrl]);
 
-  async function runCode() {
+  async function handleRun() {
     setLoading(true);
     setOutput("Running...");
 
     try {
-      const response = await fetch(
-        "/api/run",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            code,
-            languageId,
-            stdin: ""
-          })
-        }
-      );
-
-      const result = await response.json();
+      const { result } = await runCode({
+        code,
+        languageId,
+        stdin: "",
+        settings
+      });
 
       if (result.compile_output) {
         setOutput(result.compile_output);
@@ -120,9 +118,7 @@ export default function ProblemPage() {
       } else if (result.stdout) {
         setOutput(result.stdout);
       } else {
-        setOutput(
-          `No output. (HTTP ${response.status}, raw response: ${JSON.stringify(result)})`
-        );
+        setOutput(`No output. (raw response: ${JSON.stringify(result)})`);
       }
 
     } catch (error) {
@@ -136,6 +132,8 @@ export default function ProblemPage() {
     setLoading(false);
   }
 
+  const usingLocalJudge0 = Boolean(settings?.useLocalJudge0);
+
   return (
     <div className="problem-layout">
 
@@ -143,8 +141,8 @@ export default function ProblemPage() {
 
         <h1>{problem.title}</h1>
 
-        <span>
-          Difficulty: {problem.difficulty}
+        <span className={`difficulty-badge ${problem.difficulty.toLowerCase()}`}>
+          {problem.difficulty}
         </span>
 
         <p>{problem.description}</p>
@@ -204,17 +202,26 @@ export default function ProblemPage() {
               fontSize: 14,
               automaticLayout: true,
               scrollBeyondLastLine: false,
-              tabSize: 4
+              tabSize: 4,
+              wordWrap: "on"
             }}
           />
         </div>
 
-        <div className="lsp-status">
-          {STATUS_LABELS[lspStatus] || ""}
+        <div className="runner-status-row">
+          <span className="status-pill">
+            <span className={`status-dot ${lspStatus}`} />
+            <span className="lsp-status">{STATUS_LABELS[lspStatus] || ""}</span>
+          </span>
+
+          <span className="mode-pill">
+            Compiler: {usingLocalJudge0 ? "Local (Docker)" : "Hosted"}
+          </span>
         </div>
 
         <button
-          onClick={runCode}
+          className="btn-primary"
+          onClick={handleRun}
           disabled={loading}
         >
           {loading ? "Running..." : "Run Code"}
