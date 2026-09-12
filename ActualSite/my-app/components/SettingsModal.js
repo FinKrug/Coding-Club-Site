@@ -30,7 +30,6 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
 
 export default function SettingsModal({ onClose }) {
   const [form, setForm] = useState(DEFAULT_SETTINGS);
-  const [judge0Test, setJudge0Test] = useState(null);
   const [lspTest, setLspTest] = useState(null);
 
   useEffect(() => {
@@ -52,32 +51,6 @@ export default function SettingsModal({ onClose }) {
   function handleSave() {
     saveRunnerSettings(form);
     onClose();
-  }
-
-  async function testJudge0() {
-    setJudge0Test({ status: "pending", message: "Testing…" });
-    try {
-      const res = await fetchWithTimeout(
-        `${form.localJudge0Url.replace(/\/$/, "")}/languages`,
-        {
-          headers: form.localJudge0Token
-            ? { "X-Auth-Token": form.localJudge0Token }
-            : {},
-        }
-      );
-      if (res.ok) {
-        setJudge0Test({ status: "ok", message: "Connected" });
-      } else if (res.status === 401 || res.status === 403) {
-        setJudge0Test({ status: "fail", message: "Reachable, but auth token was rejected" });
-      } else {
-        setJudge0Test({ status: "fail", message: `Reachable, but returned HTTP ${res.status}` });
-      }
-    } catch {
-      setJudge0Test({
-        status: "fail",
-        message: "Unreachable — check Docker is running and CORS is enabled",
-      });
-    }
   }
 
   async function testLsp() {
@@ -115,66 +88,11 @@ export default function SettingsModal({ onClose }) {
           </button>
         </div>
         <p className="modal-subtitle">
-          Point &quot;Run Code&quot; and IntelliSense at tools running on your own
-          laptop instead of our hosted servers. Everything here is saved only
-          in this browser.
+          Point IntelliSense at a gateway running on your own laptop instead
+          of our hosted one. Everything here is saved only in this browser.
+          (&quot;Run Code&quot; always uses our hosted compiler — see the{" "}
+          <Link href="/resources/local-runner-kit" onClick={onClose}>Resources page</Link> for why.)
         </p>
-
-        <div className="settings-section">
-          <div className="settings-section-header">
-            <span className="settings-section-title">Local Judge0 (code runner)</span>
-            <label className="switch">
-              <input
-                type="checkbox"
-                checked={form.useLocalJudge0}
-                onChange={(event) => update("useLocalJudge0", event.target.checked)}
-              />
-              <span className="switch-track" />
-            </label>
-          </div>
-          <p className="settings-section-desc">
-            Run submissions against a Judge0 instance in Docker on your own
-            machine instead of our server. Visit the{" "}
-            <Link href="/resources/local-runner-kit" onClick={onClose}>Resources page</Link> for a ready-to-run
-            download.
-          </p>
-
-          {form.useLocalJudge0 && (
-            <>
-              <div className="settings-field">
-                <label htmlFor="judge0-url">Judge0 URL</label>
-                <input
-                  id="judge0-url"
-                  type="text"
-                  value={form.localJudge0Url}
-                  onChange={(event) => update("localJudge0Url", event.target.value)}
-                  placeholder="http://localhost:2358"
-                />
-              </div>
-              <div className="settings-field">
-                <label htmlFor="judge0-token">Auth token (optional)</label>
-                <input
-                  id="judge0-token"
-                  type="password"
-                  value={form.localJudge0Token}
-                  onChange={(event) => update("localJudge0Token", event.target.value)}
-                  placeholder="Leave blank unless you set AUTHN_TOKEN"
-                />
-              </div>
-              <div className="test-connection-row">
-                <button type="button" className="btn-ghost" onClick={testJudge0}>
-                  Test connection
-                </button>
-                <TestResult state={judge0Test} />
-              </div>
-              <p className="settings-hint">
-                Your browser calls this URL directly, so Judge0 needs CORS
-                enabled for this site (the bundled docker-compose already
-                does this for you).
-              </p>
-            </>
-          )}
-        </div>
 
         <div className="settings-section">
           <div className="settings-section-header">

@@ -547,17 +547,6 @@ textarea {
   50% { opacity: 0.35; }
 }
 
-.mode-pill {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 0.25rem 0.6rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-}
-
 .lsp-status {
   font-size: 0.8rem;
   color: var(--color-text-muted);
@@ -712,12 +701,6 @@ button {
 .settings-field input:focus {
   outline: 2px solid var(--color-accent);
   outline-offset: 1px;
-}
-
-.settings-hint {
-  font-size: 0.76rem;
-  color: var(--color-text-faint);
-  margin-top: 0.35rem;
 }
 
 .test-connection-row {

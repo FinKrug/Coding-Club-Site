@@ -103,8 +103,7 @@ export default function ProblemPage() {
       const { result } = await runCode({
         code,
         languageId,
-        stdin: "",
-        settings
+        stdin: ""
       });
 
       if (result.compile_output) {
@@ -131,8 +130,6 @@ export default function ProblemPage() {
 
     setLoading(false);
   }
-
-  const usingLocalJudge0 = Boolean(settings?.useLocalJudge0);
 
   return (
     <div className="problem-layout">
@@ -212,10 +209,6 @@ export default function ProblemPage() {
           <span className="status-pill">
             <span className={`status-dot ${lspStatus}`} />
             <span className="lsp-status">{STATUS_LABELS[lspStatus] || ""}</span>
-          </span>
-
-          <span className="mode-pill">
-            Compiler: {usingLocalJudge0 ? "Local (Docker)" : "Hosted"}
           </span>
         </div>
 

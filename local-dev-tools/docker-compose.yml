@@ -1,64 +1,25 @@
-# Local dev stack: a self-hosted Judge0 (code runner) and the site's
-# lsp-gateway (IntelliSense backend), both listening on localhost so the
-# site's Run Settings can point at them instead of our hosted servers.
+# Local dev stack: just the site's lsp-gateway (IntelliSense backend),
+# listening on localhost so the site's Run Settings can point at it instead
+# of our hosted gateway.
+#
+# This used to also run a self-hosted Judge0 (the code runner). That's been
+# removed — Judge0's sandboxing needs the legacy cgroup v1 hierarchy, and
+# WSL2 dropped support for it entirely as of WSL version 2.5.1, so it
+# simply can't run under Docker on Windows anymore (Docker Desktop or a
+# native Docker Engine install, it makes no difference — see README.md for
+# the full story). "Run Code" on the site always uses our hosted Judge0
+# now; that's unrelated to IntelliSense, which doesn't use cgroups at all.
 #
 # Usage (from this directory):
 #   docker compose up -d --build
 #
-# Judge0 comes up on http://localhost:2358, the IntelliSense gateway on
-# ws://localhost:3001. See README.md in this folder for the full walkthrough.
-
-x-logging:
-  &default-logging
-  logging:
-    driver: json-file
-    options:
-      max-size: 100M
+# The gateway comes up on ws://localhost:3001. See README.md in this folder
+# for the full walkthrough.
 
 services:
-  server:
-    image: judge0/judge0:1.13.1
-    volumes:
-      - ./judge0.conf:/judge0.conf:ro
-    ports:
-      - "2358:2358"
-    privileged: true
-    <<: *default-logging
-    restart: unless-stopped
-
-  worker:
-    image: judge0/judge0:1.13.1
-    command: ["./scripts/workers"]
-    volumes:
-      - ./judge0.conf:/judge0.conf:ro
-    privileged: true
-    <<: *default-logging
-    restart: unless-stopped
-
-  db:
-    image: postgres:16.2
-    env_file: judge0.conf
-    volumes:
-      - judge0-db-data:/var/lib/postgresql/data/
-    <<: *default-logging
-    restart: unless-stopped
-
-  redis:
-    image: redis:7.2.4
-    command: [
-      "bash", "-c",
-      'docker-entrypoint.sh --appendonly no --requirepass "$$REDIS_PASSWORD"'
-    ]
-    env_file: judge0.conf
-    <<: *default-logging
-    restart: unless-stopped
-
   lsp-gateway:
     build:
       context: ../lsp-gateway
     ports:
       - "3001:3001"
     restart: unless-stopped
-
-volumes:
-  judge0-db-data:

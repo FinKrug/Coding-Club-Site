@@ -155,8 +155,7 @@ function cleanupWorkspace(workspaceDir) {
 }
 
 const server = http.createServer((req, res) => {
-  // CORS-open, same posture as the bundled Judge0 (see local-dev-tools/judge0.conf):
-  // the browser calls this gateway directly from whatever origin the site is
+  // CORS-open: the browser calls this gateway directly from whatever origin the site is
   // served from (a Cloudflare domain, localhost:3000 in dev, etc), so the
   // response needs this header or the browser discards it before the site's
   // "Test connection" check (or anything else hitting this over plain HTTP)
@@ -206,7 +205,14 @@ wss.on("connection", (ws, req) => {
     return;
   }
 
-  let idleTimer = resetIdleTimer();
+  // Declared separately from the call below: `let idleTimer = resetIdleTimer()`
+  // looks equivalent but isn't — resetIdleTimer() reads `idleTimer` on its
+  // first line, and while that combined form is still evaluating its own
+  // initializer, `idleTimer` is in the `let` temporal dead zone, so the
+  // read throws "Cannot access 'idleTimer' before initialization" on every
+  // single connection. Splitting the declaration from the first call avoids
+  // that entirely.
+  let idleTimer;
 
   function resetIdleTimer() {
     if (idleTimer) clearTimeout(idleTimer);
@@ -215,6 +221,8 @@ wss.on("connection", (ws, req) => {
       ws.close(1000, "Idle timeout");
     }, IDLE_TIMEOUT_MS);
   }
+
+  idleTimer = resetIdleTimer();
 
   const feedStdout = createStdioParser((jsonString) => {
     if (ws.readyState === ws.OPEN) {
@@ -225,6 +233,21 @@ wss.on("connection", (ws, req) => {
   child.stdout.on("data", feedStdout);
   child.stderr.on("data", (data) => {
     console.error(`[${lang} stderr]`, data.toString());
+  });
+
+  // Without this, a failure to spawn (wrong binary name, not on PATH, etc.)
+  // emits an unhandled "error" event on the child process — which Node
+  // treats as an uncaught exception and crashes the *entire* gateway
+  // process, dropping every other language/session currently connected.
+  // The try/catch around spawnServer() above only catches a *synchronous*
+  // throw (e.g. buildJavaArgs() not finding the launcher jar); spawn()
+  // itself returns immediately and reports a failure to actually start the
+  // process asynchronously via this event instead.
+  child.on("error", (err) => {
+    console.error(`Language server process error for ${lang}:`, err);
+    if (ws.readyState === ws.OPEN) {
+      ws.close(1011, "Language server process error.");
+    }
   });
 
   child.on("exit", (code, signal) => {

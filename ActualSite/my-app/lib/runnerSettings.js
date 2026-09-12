@@ -5,14 +5,17 @@
 // server. Components read the current value with getRunnerSettings() and
 // react to changes (from the settings modal, in any tab) by subscribing
 // with subscribeRunnerSettings().
+//
+// This used to also cover a "Local Judge0" option (self-hosted code
+// runner), removed because Judge0's sandboxing needs the legacy cgroup v1
+// hierarchy, which WSL2 no longer supports as of WSL version 2.5.1 — see
+// local-dev-tools/README.md. "Run Code" always uses our hosted Judge0 now;
+// only IntelliSense has a local option.
 
 const STORAGE_KEY = "neumont-cc-runner-settings";
 const EVENT_NAME = "neumont-cc-runner-settings-changed";
 
 export const DEFAULT_SETTINGS = {
-  useLocalJudge0: false,
-  localJudge0Url: "http://localhost:2358",
-  localJudge0Token: "",
   useLocalLsp: false,
   localLspUrl: "ws://localhost:3001",
 };

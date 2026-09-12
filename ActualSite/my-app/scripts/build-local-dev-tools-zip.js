@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Bundles local-dev-tools/ (the Docker Compose setup for running Judge0 +
-// IntelliSense on your own machine) plus the lsp-gateway source it builds,
-// into public/downloads/local-dev-tools.zip so the Resources page can offer
-// a single download instead of "go clone our whole repo".
+// Bundles local-dev-tools/ (the Docker Compose setup for running the
+// IntelliSense gateway on your own machine) plus the lsp-gateway source it
+// builds, into public/downloads/local-dev-tools.zip so the Resources page
+// can offer a single download instead of "go clone our whole repo".
 //
 // Runs automatically before dev/build/preview/deploy (see package.json) so
 // the download always matches the current source. Pure Node, no extra
@@ -28,7 +28,6 @@ function rewriteComposePath(content) {
 
 const SOURCES = [
   { zipPath: "docker-compose.yml", src: path.join(localDevTools, "docker-compose.yml"), rewrite: rewriteComposePath },
-  { zipPath: "judge0.conf", src: path.join(localDevTools, "judge0.conf") },
   { zipPath: "README.md", src: path.join(localDevTools, "README.md") },
   { zipPath: "lsp-gateway/Dockerfile", src: path.join(lspGatewayDir, "Dockerfile") },
   { zipPath: "lsp-gateway/package.json", src: path.join(lspGatewayDir, "package.json") },

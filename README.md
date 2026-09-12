@@ -72,18 +72,14 @@ This downloads everything the website needs to run. The first install may take a
 
 # Step 5: Environment Variables
 
-The app needs an environment variable, `JUDGE0_URL` (the compiler API it calls), in a new `.env.local` file in `ActualSite/my-app` (this file is git-ignored and never committed). The easiest option for local development, since it needs no shared secrets, is to point it at a Judge0 you run yourself in Docker — see "Running Your Own Compiler Backend Locally" below — and use:
-
-```bash
-JUDGE0_URL=http://localhost:2358
-```
-
-Alternatively, if you have access to the real self-hosted instance, you can point at it directly, but it requires an auth token as well (ask a maintainer for `JUDGE0_AUTH_TOKEN` — never commit it):
+The app needs an environment variable, `JUDGE0_URL` (the compiler API it calls), in a new `.env.local` file in `ActualSite/my-app` (this file is git-ignored and never committed). Point it at the real self-hosted instance — it requires an auth token as well (ask a maintainer for `JUDGE0_AUTH_TOKEN` — never commit it):
 
 ```bash
 JUDGE0_URL=https://judge0.neumontcoding.club
 JUDGE0_AUTH_TOKEN=<ask a maintainer>
 ```
+
+(There's no local Docker option for Judge0 to point at instead — see "Running IntelliSense Locally" below for why.)
 
 A `.dev.vars` file with the same values is also used when previewing through Wrangler (see below) — it's git-ignored too.
 
@@ -120,9 +116,11 @@ When you edit files and save them, the browser will automatically refresh and sh
 
 ---
 
-# Running Your Own Compiler Backend Locally
+# Running IntelliSense Locally
 
-If you'd rather run code against a Judge0 instance (and get real IntelliSense) on your own machine instead of our hosted servers, the site's own **Resources** page (`/resources`) has a one-click download of everything needed (Docker Compose setup + config + the IntelliSense source, no repo clone required) plus setup steps. The same files live in this repo under `local-dev-tools/` if you'd rather browse them here — `local-dev-tools/README.md` has the full walkthrough and troubleshooting guide. The downloadable zip is generated automatically from `local-dev-tools/` and `lsp-gateway/` by `ActualSite/my-app/scripts/build-local-dev-tools-zip.js`, which runs before every `dev`/`build`/`preview`/`deploy`, so it never goes stale — there's nothing to update by hand when either folder changes.
+If you'd rather get real IntelliSense (completions/diagnostics for Python, C/C++, Rust, Go and Java) from a gateway on your own machine instead of our hosted one, the site's own **Resources** page (`/resources`) has a one-click download of everything needed (Docker Compose setup + the IntelliSense source, no repo clone required) plus setup steps. The same files live in this repo under `local-dev-tools/` if you'd rather browse them here — `local-dev-tools/README.md` has the full walkthrough and troubleshooting guide. The downloadable zip is generated automatically from `local-dev-tools/` and `lsp-gateway/` by `ActualSite/my-app/scripts/build-local-dev-tools-zip.js`, which runs before every `dev`/`build`/`preview`/`deploy`, so it never goes stale — there's nothing to update by hand when either folder changes.
+
+Note this is IntelliSense only — there's no local option for the code runner (Judge0) anymore. Judge0's sandboxing needs the legacy cgroup v1 hierarchy, which WSL2 no longer supports at all as of WSL version 2.5.1, so it can't run under Docker on Windows regardless of setup; `local-dev-tools/README.md` has the full story. "Run Code" always uses the hosted Judge0 (Step 5 above).
 
 ---
 

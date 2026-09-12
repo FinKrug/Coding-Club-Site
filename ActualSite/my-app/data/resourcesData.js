@@ -50,9 +50,9 @@ const resources = [
     slug: "docker",
     title: "Install Docker",
     tag: "Prerequisite",
-    summary: "What Docker is, why the downloads below need it, and how to install it.",
+    summary: "What Docker is, why the download below needs it, and how to install it.",
     intro:
-      "Docker lets you run software in lightweight, isolated \"containers\" — pre-packaged environments that include everything a program needs, without installing all of it directly on your computer. The Local Runner Kit below (and anything else on this page built around Docker Compose) needs Docker Desktop installed first.",
+      "Docker lets you run software in lightweight, isolated \"containers\" — pre-packaged environments that include everything a program needs, without installing all of it directly on your computer. The Local IntelliSense Kit below needs Docker Desktop installed first.",
     meta: "Free for personal use, education, and small teams",
     cta: {
       label: "Download Docker Desktop",
@@ -63,7 +63,7 @@ const resources = [
       "This page is optional and aimed at more advanced setups. If you're just getting started with coding, you don't need Docker at all — head over to [New to Coding? Start Here](/resources/getting-started) instead.",
     instructions: [
       "Go to [Docker Desktop](https://www.docker.com/products/docker-desktop/) and download the installer for your operating system (Windows, Mac, or Linux).",
-      "Run the installer and follow the prompts. On Windows, Docker Desktop will offer to enable WSL2 — accept this; the tools on this page need real Linux cgroups to run their sandboxing correctly.",
+      "Run the installer and follow the prompts, using the defaults.",
       "Open Docker Desktop and wait for it to report that it's running (the whale icon in your system tray/menu bar stops animating).",
       "Verify it worked by opening a terminal (on Windows, this is Command Prompt or PowerShell; on Mac, it's the Terminal app) and running `docker --version` — you should see a version number, not a \"command not found\" error."
     ],
@@ -72,29 +72,29 @@ const resources = [
   },
   {
     slug: "local-runner-kit",
-    title: "Local Runner Kit",
+    title: "Local IntelliSense Kit",
     tag: "Download",
-    summary: "Run the code compiler and IntelliSense on your own machine instead of our hosted servers.",
+    summary: "Run IntelliSense's language servers on your own machine instead of our hosted gateway.",
     intro:
-      "A Docker Compose setup for a self-hosted Judge0 (the code runner) and the IntelliSense gateway, pre-configured to work with this site's Run Settings.",
-    meta: ".zip · Docker Compose + config + IntelliSense source",
+      "A Docker Compose setup for the IntelliSense gateway — real completions, hovers and diagnostics for Python, C/C++, Rust, Go and Java — pre-configured to work with this site's Run Settings.",
+    meta: ".zip · Docker Compose + IntelliSense source",
     cta: {
       label: "Download",
       href: "/downloads/local-dev-tools.zip",
       download: true
     },
     beginnerNote:
-      "This is an optional, advanced download for people who already have a challenge or two under their belt and want more control over how their code runs. If you're brand new here, you don't need this yet — see [New to Coding? Start Here](/resources/getting-started) instead.",
+      "This is an optional, advanced download for people who already have a challenge or two under their belt and want more control over their setup. If you're brand new here, you don't need this yet — see [New to Coding? Start Here](/resources/getting-started) instead.",
     context:
-      "By default, \"Run Code\" and IntelliSense talk to servers we host. Running your own copy locally is useful if you're offline, would rather not send code you're writing to someone else's server, or just want to see how the runner works under the hood. Nothing about using the site normally requires this — it's entirely optional.",
+      "By default, IntelliSense talks to a gateway we host. Running your own copy locally is useful if you're offline or just want to see how it works under the hood. Nothing about using the site normally requires this — it's entirely optional. (\"Run Code\" always uses our hosted compiler — this download doesn't include a code runner; see the note below for why.)",
     instructions: [
       "Make sure [Docker](/resources/docker) is installed and running.",
       "Download the zip above and unzip it anywhere on your computer.",
       "Open a terminal (on Windows, this is Command Prompt or PowerShell; on Mac, it's the Terminal app) in that folder and run `docker compose up -d --build`. The first run takes a few minutes — it's installing a JDK, Go, clangd, and a few other language servers.",
-      "On the site, click the gear icon (**Run Settings**) in the navbar, turn on **Local Judge0** and **Local IntelliSense**, and use **Test connection** on each — both should say \"Connected\"."
+      "On the site, click the gear icon (**Run Settings**) in the navbar, turn on **Local IntelliSense**, and use **Test connection** — it should say \"Connected\"."
     ],
     note:
-      "The zip includes a full `README.md` with troubleshooting steps (WSL2/cgroup issues, port conflicts, per-language IntelliSense problems)."
+      "This used to also include a self-hosted Judge0 (the code runner), removed because Judge0's sandboxing needs the legacy cgroup v1 hierarchy, which Windows/WSL2 no longer supports at all as of WSL version 2.5.1 — so it simply can't run under Docker on Windows anymore. \"Run Code\" always uses our hosted Judge0 now; that has nothing to do with IntelliSense, which works fine locally regardless. The zip includes a full `README.md` with the details plus troubleshooting steps for IntelliSense itself."
   }
 ];
 
