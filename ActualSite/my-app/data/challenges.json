@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "title": "Hello World",
+    "difficulty": "Easy",
+    "week": "Week 1",
+    "points": 10,
+    "description": "Write a function that returns the text `Hello World`.",
+    "function": {
+      "name": "helloWorld",
+      "params": [],
+      "returns": "string"
+    },
+    "tests": [
+      { "args": [], "expected": "Hello World" }
+    ]
+  },
+  {
+    "id": 2,
+    "title": "Sum Two Numbers",
+    "difficulty": "Easy",
+    "week": "Week 1",
+    "points": 10,
+    "description": "Return the sum of two integers.",
+    "function": {
+      "name": "sum",
+      "params": [
+        { "name": "a", "type": "int" },
+        { "name": "b", "type": "int" }
+      ],
+      "returns": "int"
+    },
+    "tests": [
+      { "args": [2, 3], "expected": 5 },
+      { "args": [-4, 4], "expected": 0 },
+      { "args": [0, 0], "expected": 0, "hidden": true },
+      { "args": [-7, -8], "expected": -15, "hidden": true },
+      { "args": [1000000000, 1000000000], "expected": 2000000000, "hidden": true }
+    ]
+  }
+]

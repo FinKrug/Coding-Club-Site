@@ -1,0 +1,172 @@
+// Sample challenges with a correct solution in every language. Used by
+// `npm run judge:selftest` to check that the test runners in lib/judge/
+// work with the real compilers on the Judge0 server. If you change anything
+// in lib/judge/, run the self-test before deploying.
+//
+// Between them these cover every parameter/return type the runners support.
+
+export const SAMPLES = [
+  {
+    title: "sum (int, int) -> int",
+    function: { name: "sum", params: [{ name: "a", type: "int" }, { name: "b", type: "int" }], returns: "int" },
+    tests: [
+      { args: [2, 3], expected: 5 },
+      { args: [-4, 4], expected: 0 },
+      { args: [2147483000, 600], expected: 2147483600, hidden: true },
+    ],
+    solutions: {
+      python: "def sum(a: int, b: int) -> int:\n    return a + b\n",
+      javascript: "function sum(a, b) {\n    return a + b;\n}\n",
+      typescript: "function sum(a: number, b: number): number {\n    return a + b;\n}\n",
+      java: "class Solution {\n    public int sum(int a, int b) {\n        return a + b;\n    }\n}\n",
+      csharp: "public class Solution {\n    public int sum(int a, int b) {\n        return a + b;\n    }\n}\n",
+      cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\nint sum(int a, int b) {\n    return a + b;\n}\n",
+      c: "#include <stdio.h>\n\nint sum(int a, int b) {\n    return a + b;\n}\n",
+      rust: "fn sum(a: i32, b: i32) -> i32 {\n    a + b\n}\n",
+      go: "package main\n\nfunc sum(a int, b int) int {\n    return a + b\n}\n",
+    },
+  },
+  {
+    title: "reverse (string) -> string, with unicode and empty strings",
+    function: { name: "reverse", params: [{ name: "s", type: "string" }], returns: "string" },
+    tests: [
+      { args: ["hello"], expected: "olleh" },
+      { args: [""], expected: "" },
+      { args: ["a b, c"], expected: "c ,b a" },
+      { args: ["héllo wörld"], expected: "dlröw olléh", hidden: true },
+    ],
+    solutions: {
+      python: "def reverse(s: str) -> str:\n    return s[::-1]\n",
+      javascript: "function reverse(s) {\n    return Array.from(s).reverse().join('');\n}\n",
+      typescript: "function reverse(s: string): string {\n    return s.split('').reverse().join('');\n}\n",
+      java: "class Solution {\n    public String reverse(String s) {\n        return new StringBuilder(s).reverse().toString();\n    }\n}\n",
+      csharp: "using System;\n\npublic class Solution {\n    public string reverse(string s) {\n        char[] a = s.ToCharArray();\n        Array.Reverse(a);\n        return new string(a);\n    }\n}\n",
+      cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\n// reverse by code point so multi-byte UTF-8 characters survive\nstring reverse(string& s) {\n    vector<string> chars;\n    for (size_t i = 0; i < s.size();) {\n        size_t len = 1;\n        unsigned char c = s[i];\n        if (c >= 0xF0) len = 4; else if (c >= 0xE0) len = 3; else if (c >= 0xC0) len = 2;\n        chars.push_back(s.substr(i, len));\n        i += len;\n    }\n    string out;\n    for (auto it = chars.rbegin(); it != chars.rend(); ++it) out += *it;\n    return out;\n}\n",
+      c: "#include <stdlib.h>\n#include <string.h>\n\nchar* reverse(char* s) {\n    size_t n = strlen(s);\n    char* out = malloc(n + 1);\n    size_t w = n;\n    out[n] = '\\0';\n    for (size_t i = 0; i < n;) {\n        size_t len = 1;\n        unsigned char c = (unsigned char)s[i];\n        if (c >= 0xF0) len = 4; else if (c >= 0xE0) len = 3; else if (c >= 0xC0) len = 2;\n        w -= len;\n        memcpy(out + w, s + i, len);\n        i += len;\n    }\n    return out;\n}\n",
+      rust: "fn reverse(s: String) -> String {\n    s.chars().rev().collect()\n}\n",
+      go: "package main\n\nfunc reverse(s string) string {\n    r := []rune(s)\n    for i, j := 0, len(r)-1; i < j; i, j = i+1, j-1 {\n        r[i], r[j] = r[j], r[i]\n    }\n    return string(r)\n}\n",
+    },
+  },
+  {
+    title: "average (double[]) -> double, compared with a tolerance",
+    function: { name: "average", params: [{ name: "nums", type: "double[]" }], returns: "double" },
+    tests: [
+      { args: [[1, 2]], expected: 1.5 },
+      { args: [[0.1, 0.2]], expected: 0.15 },
+      { args: [[1e-7, 3e-7]], expected: 2e-7, hidden: true },
+      { args: [[-2.5]], expected: -2.5, hidden: true },
+    ],
+    solutions: {
+      python: "from typing import List\n\ndef average(nums: List[float]) -> float:\n    return sum(nums) / len(nums)\n",
+      javascript: "function average(nums) {\n    return nums.reduce((a, b) => a + b, 0) / nums.length;\n}\n",
+      typescript: "function average(nums: number[]): number {\n    let total = 0;\n    for (let i = 0; i < nums.length; i++) total += nums[i];\n    return total / nums.length;\n}\n",
+      java: "class Solution {\n    public double average(double[] nums) {\n        double t = 0;\n        for (double x : nums) t += x;\n        return t / nums.length;\n    }\n}\n",
+      csharp: "using System.Linq;\n\npublic class Solution {\n    public static double average(double[] nums) {\n        return nums.Average();\n    }\n}\n",
+      cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\ndouble average(vector<double> nums) {\n    return accumulate(nums.begin(), nums.end(), 0.0) / nums.size();\n}\n",
+      c: "double average(double* nums, int numsSize) {\n    double t = 0;\n    for (int i = 0; i < numsSize; i++) t += nums[i];\n    return t / numsSize;\n}\n",
+      rust: "fn average(nums: Vec<f64>) -> f64 {\n    let total: f64 = nums.iter().sum();\n    total / nums.len() as f64\n}\n",
+      go: "package main\n\nfunc average(nums []float64) float64 {\n    t := 0.0\n    for _, x := range nums {\n        t += x\n    }\n    return t / float64(len(nums))\n}\n",
+    },
+  },
+  {
+    title: "evens (int[]) -> int[], including an empty result",
+    function: { name: "evens", params: [{ name: "nums", type: "int[]" }], returns: "int[]" },
+    tests: [
+      { args: [[1, 2, 3, 4]], expected: [2, 4] },
+      { args: [[1, 3]], expected: [] },
+      { args: [[]], expected: [], hidden: true },
+      { args: [[-2, 0, 7, 10]], expected: [-2, 0, 10], hidden: true },
+    ],
+    solutions: {
+      python: "from typing import List\n\ndef evens(nums: List[int]) -> List[int]:\n    return [x for x in nums if x % 2 == 0]\n",
+      javascript: "function evens(nums) {\n    return nums.filter(x => x % 2 === 0);\n}\n",
+      typescript: "function evens(nums: number[]): number[] {\n    return nums.filter(function (x) { return x % 2 === 0; });\n}\n",
+      java: "import java.util.*;\n\nclass Solution {\n    public int[] evens(int[] nums) {\n        return Arrays.stream(nums).filter(x -> x % 2 == 0).toArray();\n    }\n}\n",
+      csharp: "using System.Linq;\n\npublic class Solution {\n    public int[] evens(int[] nums) {\n        return nums.Where(x => x % 2 == 0).ToArray();\n    }\n}\n",
+      cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\nvector<int> evens(vector<int>& nums) {\n    vector<int> out;\n    for (int x : nums) if (x % 2 == 0) out.push_back(x);\n    return out;\n}\n",
+      c: "#include <stdlib.h>\n\nint* evens(int* nums, int numsSize, int* returnSize) {\n    int* out = malloc(sizeof(int) * (numsSize + 1));\n    int n = 0;\n    for (int i = 0; i < numsSize; i++) if (nums[i] % 2 == 0) out[n++] = nums[i];\n    *returnSize = n;\n    return out;\n}\n",
+      rust: "fn evens(nums: Vec<i32>) -> Vec<i32> {\n    nums.into_iter().filter(|x| x % 2 == 0).collect()\n}\n",
+      go: "package main\n\nfunc evens(nums []int) []int {\n    out := []int{}\n    for _, x := range nums {\n        if x%2 == 0 {\n            out = append(out, x)\n        }\n    }\n    return out\n}\n",
+    },
+  },
+  {
+    title: "transpose (int[][]) -> int[][] (not available in C)",
+    function: { name: "transpose", params: [{ name: "grid", type: "int[][]" }], returns: "int[][]" },
+    tests: [
+      { args: [[[1, 2, 3], [4, 5, 6]]], expected: [[1, 4], [2, 5], [3, 6]] },
+      { args: [[[7]]], expected: [[7]], hidden: true },
+    ],
+    solutions: {
+      python: "from typing import List\n\ndef transpose(grid: List[List[int]]) -> List[List[int]]:\n    return [list(row) for row in zip(*grid)]\n",
+      javascript: "function transpose(grid) {\n    return grid[0].map((_, c) => grid.map(row => row[c]));\n}\n",
+      typescript: "function transpose(grid: number[][]): number[][] {\n    const out: number[][] = [];\n    for (let c = 0; c < grid[0].length; c++) {\n        const row: number[] = [];\n        for (let r = 0; r < grid.length; r++) row.push(grid[r][c]);\n        out.push(row);\n    }\n    return out;\n}\n",
+      java: "class Solution {\n    public int[][] transpose(int[][] grid) {\n        int[][] out = new int[grid[0].length][grid.length];\n        for (int r = 0; r < grid.length; r++)\n            for (int c = 0; c < grid[0].length; c++) out[c][r] = grid[r][c];\n        return out;\n    }\n}\n",
+      csharp: "public class Solution {\n    public int[][] transpose(int[][] grid) {\n        int[][] out1 = new int[grid[0].Length][];\n        for (int c = 0; c < grid[0].Length; c++) {\n            out1[c] = new int[grid.Length];\n            for (int r = 0; r < grid.Length; r++) out1[c][r] = grid[r][c];\n        }\n        return out1;\n    }\n}\n",
+      cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\nvector<vector<int>> transpose(vector<vector<int>>& grid) {\n    vector<vector<int>> out(grid[0].size(), vector<int>(grid.size()));\n    for (size_t r = 0; r < grid.size(); r++)\n        for (size_t c = 0; c < grid[0].size(); c++) out[c][r] = grid[r][c];\n    return out;\n}\n",
+      rust: "fn transpose(grid: Vec<Vec<i32>>) -> Vec<Vec<i32>> {\n    let mut out = vec![vec![0; grid.len()]; grid[0].len()];\n    for r in 0..grid.len() {\n        for c in 0..grid[0].len() {\n            out[c][r] = grid[r][c];\n        }\n    }\n    out\n}\n",
+      go: "package main\n\nfunc transpose(grid [][]int) [][]int {\n    out := make([][]int, len(grid[0]))\n    for c := range out {\n        out[c] = make([]int, len(grid))\n        for r := range grid {\n            out[c][r] = grid[r][c]\n        }\n    }\n    return out\n}\n",
+    },
+  },
+  {
+    title: "label (string[], bool, long) -> string[], answers in any order",
+    function: {
+      name: "label",
+      params: [{ name: "words", type: "string[]" }, { name: "loud", type: "bool" }, { name: "start", type: "long" }],
+      returns: "string[]",
+      anyOrder: true,
+    },
+    tests: [
+      { args: [["a", "b"], false, 1], expected: ["a#1", "b#2"] },
+      { args: [["x"], true, 9000000000], expected: ["x#9000000000!"] },
+      { args: [["p", "q", "r"], true, -1], expected: ["r#1!", "q#0!", "p#-1!"], hidden: true },
+      { args: [[], false, 5], expected: [], hidden: true },
+    ],
+    solutions: {
+      python: "from typing import List\n\ndef label(words: List[str], loud: bool, start: int) -> List[str]:\n    return [w + '#' + str(start + i) + ('!' if loud else '') for i, w in enumerate(words)]\n",
+      javascript: "function label(words, loud, start) {\n    return words.map((w, i) => w + '#' + (start + i) + (loud ? '!' : ''));\n}\n",
+      typescript: "function label(words: string[], loud: boolean, start: number): string[] {\n    const out: string[] = [];\n    for (let i = 0; i < words.length; i++) out.push(words[i] + '#' + (start + i) + (loud ? '!' : ''));\n    return out;\n}\n",
+      java: "class Solution {\n    public String[] label(String[] words, boolean loud, long start) {\n        String[] out = new String[words.length];\n        for (int i = 0; i < words.length; i++) out[i] = words[i] + \"#\" + (start + i) + (loud ? \"!\" : \"\");\n        return out;\n    }\n}\n",
+      csharp: "public class Solution {\n    public string[] label(string[] words, bool loud, long start) {\n        var outArr = new string[words.Length];\n        for (int i = 0; i < words.Length; i++) outArr[i] = words[i] + \"#\" + (start + i) + (loud ? \"!\" : \"\");\n        return outArr;\n    }\n}\n",
+      cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\nvector<string> label(vector<string>& words, bool loud, long long start) {\n    vector<string> out;\n    for (size_t i = 0; i < words.size(); i++) out.push_back(words[i] + \"#\" + to_string(start + (long long)i) + (loud ? \"!\" : \"\"));\n    return out;\n}\n",
+      c: "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\nchar** label(char** words, int wordsSize, bool loud, long long start, int* returnSize) {\n    char** out = malloc(sizeof(char*) * (wordsSize + 1));\n    for (int i = 0; i < wordsSize; i++) {\n        out[i] = malloc(strlen(words[i]) + 32);\n        sprintf(out[i], \"%s#%lld%s\", words[i], start + i, loud ? \"!\" : \"\");\n    }\n    *returnSize = wordsSize;\n    return out;\n}\n",
+      rust: "fn label(words: Vec<String>, loud: bool, start: i64) -> Vec<String> {\n    words.iter().enumerate().map(|(i, w)| format!(\"{}#{}{}\", w, start + i as i64, if loud { \"!\" } else { \"\" })).collect()\n}\n",
+      go: "package main\n\nimport \"fmt\"\n\nfunc label(words []string, loud bool, start int64) []string {\n    out := []string{}\n    for i, w := range words {\n        s := fmt.Sprintf(\"%s#%d\", w, start+int64(i))\n        if loud {\n            s += \"!\"\n        }\n        out = append(out, s)\n    }\n    return out\n}\n",
+    },
+  },
+  {
+    title: "allPositive (long[]) -> bool, no parameters edge: big numbers",
+    function: { name: "allPositive", params: [{ name: "nums", type: "long[]" }], returns: "bool" },
+    tests: [
+      { args: [[1, 2, 3]], expected: true },
+      { args: [[5, -1]], expected: false },
+      { args: [[9007199254740991, 1]], expected: true, hidden: true },
+    ],
+    solutions: {
+      python: "from typing import List\n\ndef allPositive(nums: List[int]) -> bool:\n    return all(x > 0 for x in nums)\n",
+      javascript: "function allPositive(nums) {\n    return nums.every(x => x > 0);\n}\n",
+      typescript: "function allPositive(nums: number[]): boolean {\n    for (let i = 0; i < nums.length; i++) if (nums[i] <= 0) return false;\n    return true;\n}\n",
+      java: "class Solution {\n    public boolean allPositive(long[] nums) {\n        for (long x : nums) if (x <= 0) return false;\n        return true;\n    }\n}\n",
+      csharp: "using System.Linq;\n\npublic class Solution {\n    public bool allPositive(long[] nums) {\n        return nums.All(x => x > 0);\n    }\n}\n",
+      cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\nbool allPositive(vector<long long>& nums) {\n    for (long long x : nums) if (x <= 0) return false;\n    return true;\n}\n",
+      c: "#include <stdbool.h>\n\nbool allPositive(long long* nums, int numsSize) {\n    for (int i = 0; i < numsSize; i++) if (nums[i] <= 0) return false;\n    return true;\n}\n",
+      rust: "fn allPositive(nums: Vec<i64>) -> bool {\n    nums.iter().all(|&x| x > 0)\n}\n",
+      go: "package main\n\nfunc allPositive(nums []int64) bool {\n    for _, x := range nums {\n        if x <= 0 {\n            return false\n        }\n    }\n    return true\n}\n",
+    },
+  },
+  {
+    title: "greet () -> string, no parameters",
+    function: { name: "greet", params: [], returns: "string" },
+    tests: [{ args: [], expected: "Hello World" }],
+    solutions: {
+      python: "def greet() -> str:\n    return 'Hello World'\n",
+      javascript: "function greet() {\n    return 'Hello World';\n}\n",
+      typescript: "function greet(): string {\n    return 'Hello World';\n}\n",
+      java: "class Solution {\n    public String greet() {\n        return \"Hello World\";\n    }\n}\n",
+      csharp: "public class Solution {\n    public string greet() {\n        return \"Hello World\";\n    }\n}\n",
+      cpp: "#include <bits/stdc++.h>\nusing namespace std;\n\nstring greet() {\n    return \"Hello World\";\n}\n",
+      c: "char* greet(void) {\n    return \"Hello World\";\n}\n",
+      rust: "fn greet() -> String {\n    String::from(\"Hello World\")\n}\n",
+      go: "package main\n\nfunc greet() string {\n    return \"Hello World\"\n}\n",
+    },
+  },
+];

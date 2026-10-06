@@ -1,237 +1,139 @@
-"use client";
+import { notFound } from "next/navigation";
+import { getChallenge } from "@/lib/challenges";
+import { getSession } from "@/lib/session";
+import { getSolvedLanguages } from "@/lib/points";
+import { LANGUAGE_LIST, PRIORITY_MULTIPLIER, pointsFor } from "@/lib/judge/languageList.mjs";
+import CodeEditor from "@/components/CodeEditor";
+import InlineText from "@/components/InlineText";
 
-import { useParams } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
-import dynamic from "next/dynamic";
-import problems from "@/data/problemData";
-import { connectLanguageServer } from "@/lib/lspClient";
-import { runCode } from "@/lib/judge0Client";
-import { getRunnerSettings, subscribeRunnerSettings } from "@/lib/runnerSettings";
+export const dynamic = "force-dynamic";
 
-const MonacoEditor = dynamic(
-  () => import("@monaco-editor/react"),
-  {
-    ssr: false,
-    loading: () => <p>Loading editor...</p>
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  try {
+    const problem = await getChallenge(id);
+    if (problem) return { title: `${problem.title} — Neumont Coding Club` };
+  } catch {
+    // Fall through to the default title; the page itself reports the error.
   }
-);
+  return { title: "Challenge — Neumont Coding Club" };
+}
 
-const languages = [
-  { id: 71, name: "Python 3", monacoLanguage: "python" },
-  { id: 63, name: "JavaScript", monacoLanguage: "javascript" },
-  { id: 62, name: "Java", monacoLanguage: "java" },
-  { id: 54, name: "C++", monacoLanguage: "cpp" },
-  { id: 50, name: "C", monacoLanguage: "c" },
-  { id: 73, name: "Rust", monacoLanguage: "rust" },
-  { id: 60, name: "Go", monacoLanguage: "go" },
-  { id: 74, name: "TypeScript", monacoLanguage: "typescript" }
-];
+export default async function ProblemPage({ params }) {
+  const { id } = await params;
 
-const STATUS_LABELS = {
-  "not-applicable": "Built-in IntelliSense active",
-  connecting: "IntelliSense: connecting…",
-  connected: "IntelliSense: connected",
-  disconnected: "IntelliSense: disconnected, retrying…",
-  error: "IntelliSense: connection error, retrying…"
-};
-
-export default function ProblemPage() {
-  const { id } = useParams();
-
-  const problem = problems.find(
-    p => p.id === Number(id)
-  );
-
-  const [code, setCode] = useState("");
-  const [languageId, setLanguageId] = useState(71);
-  const [output, setOutput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [editorReady, setEditorReady] = useState(false);
-  const [lspStatus, setLspStatus] = useState("connecting");
-  const [settings, setSettings] = useState(null);
-
-  const editorRef = useRef(null);
-  const monacoRef = useRef(null);
-
-  useEffect(() => {
-    setSettings(getRunnerSettings());
-    return subscribeRunnerSettings(setSettings);
-  }, []);
-
-  if (!problem) {
-    return <h2>Problem Not Found</h2>;
+  let problem;
+  try {
+    problem = await getChallenge(id);
+  } catch (error) {
+    console.error("Failed to load challenge:", error);
+    return (
+      <div className="container">
+        <h1>Challenge unavailable</h1>
+        <p>We couldn&apos;t load this challenge right now. Please try again in a moment.</p>
+      </div>
+    );
   }
 
-  const currentLanguage = languages.find(
-    l => l.id === languageId
-  );
+  if (!problem) notFound();
 
-  function handleEditorDidMount(editor, monaco) {
-    editorRef.current = editor;
-    monacoRef.current = monaco;
-    setEditorReady(true);
-  }
-
-  useEffect(() => {
-    if (!editorReady || !editorRef.current || !monacoRef.current || !settings) return;
-
-    const model = editorRef.current.getModel();
-    if (!model) return;
-
-    const lang = currentLanguage?.monacoLanguage;
-    const gatewayUrl = settings.useLocalLsp ? settings.localLspUrl : undefined;
-
-    const client = connectLanguageServer({
-      monaco: monacoRef.current,
-      model,
-      lang,
-      gatewayUrl,
-      onStatusChange: setLspStatus
-    });
-
-    return () => {
-      client.dispose();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editorReady, languageId, settings?.useLocalLsp, settings?.localLspUrl]);
-
-  async function handleRun() {
-    setLoading(true);
-    setOutput("Running...");
-
+  // Which languages the signed-in member has already solved this in.
+  let solvedLanguages = [];
+  const session = await getSession();
+  if (session && problem.tests.hasTests) {
     try {
-      const { result } = await runCode({
-        code,
-        languageId,
-        stdin: ""
-      });
-
-      if (result.compile_output) {
-        setOutput(result.compile_output);
-      } else if (result.stderr) {
-        setOutput(result.stderr);
-      } else if (result.error) {
-        setOutput(
-          `Error: ${result.error}${result.details ? `\n\nDetails: ${result.details}` : ""}`
-        );
-      } else if (result.stdout) {
-        setOutput(result.stdout);
-      } else {
-        setOutput(`No output. (raw response: ${JSON.stringify(result)})`);
-      }
-
+      solvedLanguages = (await getSolvedLanguages(session.userId, [problem.id])).get(problem.id) || [];
     } catch (error) {
-      console.error(error);
-
-      setOutput(
-        `Could not connect to compiler server. (${error.message})`
-      );
+      console.error("Failed to load solves:", error);
     }
-
-    setLoading(false);
   }
+  const solvedNames = LANGUAGE_LIST.filter((l) => solvedLanguages.includes(l.id)).map((l) => l.name);
+  const bonusPoints = pointsFor(problem.points, LANGUAGE_LIST.find((l) => l.priority).id);
+
+  // Blank lines in the description start a new paragraph. `code` and
+  // **bold** work inside the text.
+  const paragraphs = problem.description
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+
+  // Hand-written examples win; otherwise show the challenge's visible tests.
+  const tests = problem.tests;
+  const examples = problem.examples.length
+    ? problem.examples
+    : tests.visibleTests.map((test) => ({ input: test.call, output: test.expected }));
 
   return (
     <div className="problem-layout">
-
       <div className="problem-description">
-
         <h1>{problem.title}</h1>
 
-        <span className={`difficulty-badge ${problem.difficulty.toLowerCase()}`}>
-          {problem.difficulty}
-        </span>
+        <div className="problem-meta">
+          <span className={`difficulty-badge ${problem.difficulty.toLowerCase()}`}>
+            {problem.difficulty}
+          </span>
+          {problem.tests.hasTests && (
+            <span className="problem-points">
+              {problem.points} pts · {bonusPoints} pts in Python, Java or C# ({PRIORITY_MULTIPLIER}×)
+            </span>
+          )}
+        </div>
 
-        <p>{problem.description}</p>
+        {solvedNames.length > 0 && (
+          <p className="problem-solved">✓ You&apos;ve solved this in {solvedNames.join(", ")}.</p>
+        )}
 
-        <h3>Example</h3>
+        {paragraphs.map((paragraph, index) => (
+          <p key={index}>
+            <InlineText text={paragraph} />
+          </p>
+        ))}
 
-        {problem.examples.map((example, index) => (
-          <div key={index}>
+        {examples.length > 0 && (
+          <h3>{examples.length === 1 ? "Example" : "Examples"}</h3>
+        )}
 
+        {examples.map((example, index) => (
+          <div key={index} className="problem-example">
             <p>
-              <strong>Input:</strong>{" "}
-              {example.input}
+              <strong>Input:</strong> <code>{example.input}</code>
             </p>
-
             <p>
-              <strong>Output:</strong>{" "}
-              {example.output}
+              <strong>Output:</strong> <code>{example.output}</code>
             </p>
-
           </div>
         ))}
 
+        {tests.hasTests && (
+          <p className="problem-test-note">
+            Your solution is checked against {tests.visibleTests.length} example{" "}
+            {tests.visibleTests.length === 1 ? "test" : "tests"}
+            {tests.hiddenCount > 0 && (
+              <>
+                {" "}and {tests.hiddenCount} hidden {tests.hiddenCount === 1 ? "test" : "tests"} (edge cases and
+                bigger inputs)
+              </>
+            )}
+            .
+          </p>
+        )}
+
+        {tests.setupProblems.length > 0 && (
+          <p className="problem-setup-warning">
+            This challenge&apos;s tests aren&apos;t set up correctly yet, so it can&apos;t be graded:{" "}
+            {tests.setupProblems[0]}
+          </p>
+        )}
       </div>
 
-      <div className="editor">
-
-        <h3>Your Solution</h3>
-
-        <select
-          value={languageId}
-          onChange={(e) =>
-            setLanguageId(Number(e.target.value))
-          }
-        >
-
-          {languages.map((language) => (
-            <option
-              key={language.id}
-              value={language.id}
-            >
-              {language.name}
-            </option>
-          ))}
-
-        </select>
-
-        <div className="monaco-container">
-          <MonacoEditor
-            height="500px"
-            language={currentLanguage?.monacoLanguage || "plaintext"}
-            value={code}
-            onChange={(value) => setCode(value || "")}
-            onMount={handleEditorDidMount}
-            theme="vs-dark"
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              tabSize: 4,
-              wordWrap: "on"
-            }}
-          />
-        </div>
-
-        <div className="runner-status-row">
-          <span className="status-pill">
-            <span className={`status-dot ${lspStatus}`} />
-            <span className="lsp-status">{STATUS_LABELS[lspStatus] || ""}</span>
-          </span>
-        </div>
-
-        <button
-          className="btn-primary"
-          onClick={handleRun}
-          disabled={loading}
-        >
-          {loading ? "Running..." : "Run Code"}
-        </button>
-
-        <div className="output">
-
-          <h3>Output</h3>
-
-          <pre>
-            {output}
-          </pre>
-
-        </div>
-
-      </div>
-
+      <CodeEditor
+        challengeId={problem.id}
+        hasTests={tests.hasTests}
+        starters={tests.starters}
+        supportedLanguages={tests.languages}
+        solvedLanguages={solvedLanguages}
+        basePoints={problem.points}
+      />
     </div>
   );
 }
