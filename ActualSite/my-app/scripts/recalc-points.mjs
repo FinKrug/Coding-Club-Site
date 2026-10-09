@@ -1,6 +1,6 @@
 // Rebuilds every user's point total from their records: solves (points per
-// challenge per language) plus languageBonuses (first solve in a new
-// language). Run it if a total ever looks wrong:
+// challenge per language) plus achievements (e.g. "Learned Rust" for a
+// member's first solve in a language). Run it if a total ever looks wrong:
 //
 //   npm run points:recalc                    shows what would change
 //   npm run points:recalc -- --fix           saves the corrected totals
@@ -11,11 +11,12 @@
 //   npm run points:recalc -- --reprice --fix
 //
 // --reprice sets each solve to what it's worth now, and gives each member
-// the new-language bonus for their earliest solve in every language they've
-// used (if they don't have it yet).
+// the "Learned <language>" achievement for every language they've solved
+// something in (if they don't have it yet).
 
 import { MongoClient } from "mongodb";
-import { pointsFor, NEW_LANGUAGE_BONUS } from "../lib/judge/languageList.mjs";
+import { pointsFor } from "../lib/judge/languageList.mjs";
+import { getAchievement, learnedLanguageKey } from "../lib/achievements.mjs";
 
 const uri = process.env.MONGODB_URI;
 if (!uri) {
@@ -31,7 +32,7 @@ try {
   await client.connect();
   const db = client.db(process.env.MONGODB_DB || "coding-club");
   const solves = db.collection("solves");
-  const bonuses = db.collection("languageBonuses");
+  const achievements = db.collection("achievements");
 
   if (reprice) {
     const basePoints = new Map();
@@ -51,20 +52,23 @@ try {
     }
     let added = 0;
     for (const solve of earliest.values()) {
-      const exists = await bonuses.countDocuments({ userId: solve.userId, languageId: solve.languageId }, { limit: 1 });
+      const learned = getAchievement(learnedLanguageKey(solve.languageId));
+      if (!learned) continue;
+      const exists = await achievements.countDocuments({ userId: solve.userId, key: learned.key }, { limit: 1 });
       if (exists) continue;
       added += 1;
       if (fix) {
-        await bonuses.insertOne({
+        await achievements.insertOne({
           userId: solve.userId,
-          languageId: solve.languageId,
+          key: learned.key,
+          points: learned.points,
           challengeId: solve.challengeId,
-          points: NEW_LANGUAGE_BONUS,
-          awardedAt: solve.solvedAt || new Date(),
+          languageId: solve.languageId,
+          unlockedAt: solve.solvedAt || new Date(),
         });
       }
     }
-    console.log(`${fix ? "Re-priced" : "Would re-price"} ${repriced} solve(s) and ${fix ? "added" : "would add"} ${added} new-language bonus(es).`);
+    console.log(`${fix ? "Re-priced" : "Would re-price"} ${repriced} solve(s) and ${fix ? "unlocked" : "would unlock"} ${added} "Learned <language>" achievement(s).`);
   }
 
   const earned = new Map();
@@ -73,7 +77,7 @@ try {
     earned.set(key, (earned.get(key) || 0) + (Number(points) || 0));
   };
   for await (const solve of solves.find({}, { projection: { userId: 1, points: 1 } })) add(solve.userId, solve.points);
-  for await (const bonus of bonuses.find({}, { projection: { userId: 1, points: 1 } })) add(bonus.userId, bonus.points);
+  for await (const achievement of achievements.find({}, { projection: { userId: 1, points: 1 } })) add(achievement.userId, achievement.points);
 
   let wrong = 0;
   for await (const user of db.collection("users").find({}, { projection: { name: 1, email: 1, points: 1 } })) {

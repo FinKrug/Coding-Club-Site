@@ -98,8 +98,10 @@ export default function PrivacyPage() {
       <h2>Who can see your information</h2>
       <p>
         Club officers who maintain the site can see account and progress information to run the club (for
-        example, to fix a points problem or hand out a prize). Your name and points may be shown to other members
-        if the site adds features like a leaderboard. Your email address and password never are.
+        example, to fix a points problem or hand out a prize). The leaderboard and each challenge&apos;s
+        &quot;first to solve&quot; list show other visitors your first name and last initial, your points, how many
+        challenges you&apos;ve solved and in which languages. You can hide yourself from both on your Account page.
+        Your email address and password are never shown.
       </p>
 
       <h2>Keeping your data safe</h2>

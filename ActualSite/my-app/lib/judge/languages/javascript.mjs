@@ -22,13 +22,16 @@ function writer(type, value) {
   return { int: "__wi", long: "__wi", double: "__wd", bool: "__wb", string: "__ws" }[type.base] + `(${value})`;
 }
 
+// "require" is split in two below on purpose: the Cloudflare build rewrites
+// an eval of the plain string "require" into a bare require, which
+// TypeScript then rejects ("Cannot find name 'require'").
 function program(fn, code, nonce) {
   const args = fn.params.map((p) => reader(parseType(p.type))).join(", ");
   return `${code}
 
 // ---- test runner added by the site (your code is above) ----
 ;(function () {
-  var __req = eval("require");
+  var __req = eval("req" + "uire");
   var __proc = eval("process");
   var __Buf = eval("Buffer");
   var __tok = String(__req("fs").readFileSync(0, "utf8")).split(/\\s+/).filter(function (t) { return t.length > 0; });

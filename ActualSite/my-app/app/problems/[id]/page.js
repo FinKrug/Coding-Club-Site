@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getChallenge } from "@/lib/challenges";
 import { getSession } from "@/lib/session";
 import { getSolveSummary } from "@/lib/points";
-import { LANGUAGE_LIST, NEW_LANGUAGE_BONUS, pointsFor } from "@/lib/judge/languageList.mjs";
+import { getChallengeSolvers } from "@/lib/leaderboard";
+import { LANGUAGE_LIST, pointsFor } from "@/lib/judge/languageList.mjs";
+import { LEARNED_LANGUAGE_POINTS } from "@/lib/achievements.mjs";
 import CodeEditor from "@/components/CodeEditor";
 import InlineText from "@/components/InlineText";
 
@@ -38,7 +41,7 @@ export default async function ProblemPage({ params }) {
   if (!problem) notFound();
 
   // Which languages the signed-in member has solved this in, and which
-  // languages they've used at all (for the first-solve bonus).
+  // languages they've used at all (for the "Learned <language>" achievements).
   let solvedLanguages = [];
   let usedLanguages = null;
   const session = await getSession();
@@ -51,6 +54,16 @@ export default async function ProblemPage({ params }) {
       console.error("Failed to load solves:", error);
     }
   }
+  // How many members have solved it, and who got there first.
+  let solvers = null;
+  if (problem.tests.hasTests) {
+    try {
+      solvers = await getChallengeSolvers(problem.id);
+    } catch (error) {
+      console.error("Failed to load solvers:", error);
+    }
+  }
+
   const solvedNames = LANGUAGE_LIST.filter((l) => solvedLanguages.includes(l.id)).map((l) => l.name);
   const topPoints = Math.max(...LANGUAGE_LIST.map((l) => pointsFor(problem.points, l.id)));
 
@@ -78,7 +91,7 @@ export default async function ProblemPage({ params }) {
           </span>
           {problem.tests.hasTests && (
             <span className="problem-points">
-              {problem.points}–{topPoints} pts depending on language · +{NEW_LANGUAGE_BONUS} for a language that&apos;s new to you
+              {problem.points}–{topPoints} pts depending on language · +{LEARNED_LANGUAGE_POINTS} for learning a language that&apos;s new to you
             </span>
           )}
         </div>
@@ -120,6 +133,33 @@ export default async function ProblemPage({ params }) {
             )}
             .
           </p>
+        )}
+
+        {solvers && (
+          <div className="first-solvers">
+            <h3>
+              {solvers.solvers === 0
+                ? "Nobody has solved this yet"
+                : `Solved by ${solvers.solvers} ${solvers.solvers === 1 ? "member" : "members"}`}
+            </h3>
+            {solvers.first.length > 0 ? (
+              <ol>
+                {solvers.first.map((solver, index) => (
+                  <li key={index}>
+                    <span className="first-solvers-place">{index + 1}</span>
+                    <span className="first-solvers-name">{solver.name}</span>
+                    <span className="first-solvers-detail">
+                      {solver.language} ·{" "}
+                      {new Date(solver.solvedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              solvers.solvers === 0 && <p className="first-solvers-empty">Be the first to solve it!</p>
+            )}
+            <Link href="/leaderboard" className="first-solvers-link">Full leaderboard →</Link>
+          </div>
         )}
 
         {tests.setupProblems.length > 0 && (

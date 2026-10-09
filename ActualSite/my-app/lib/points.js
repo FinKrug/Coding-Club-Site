@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { withDb } from "@/lib/mongodb";
-import { pointsFor, NEW_LANGUAGE_BONUS } from "@/lib/judge/languageList.mjs";
+import { pointsFor } from "@/lib/judge/languageList.mjs";
+import { getAchievement, learnedLanguageKey } from "@/lib/achievements.mjs";
 
 // Points are earned once per challenge per language: the first passing
 // Submit in Rust earns the Rust points, a later pass in Java earns the Java
@@ -8,11 +9,12 @@ import { pointsFor, NEW_LANGUAGE_BONUS } from "@/lib/judge/languageList.mjs";
 // language is worth lives in lib/judge/languageList.mjs.
 //
 // On top of that, the first time a member solves anything in a language
-// they've never used here, they get a one-time NEW_LANGUAGE_BONUS.
+// they unlock its "Learned <language>" achievement (lib/achievements.mjs),
+// worth extra points for learning it.
 //
 // Records:
-//   solves          one per (user, challenge, language), unique index
-//   languageBonuses one per (user, language), unique index
+//   solves        one per (user, challenge, language), unique index
+//   achievements  one per (user, achievement key), unique index
 // Both have unique indexes (scripts/setup-db.mjs), which is what stops
 // double-awarding even if someone double-clicks Submit. users.points is a
 // running total of both; `npm run points:recalc` rebuilds it if it drifts.
@@ -27,7 +29,7 @@ export async function awardSolve({ userId, challenge, languageId }) {
 
   return withDb(async (db) => {
     const solves = db.collection("solves");
-    const bonuses = db.collection("languageBonuses");
+    const achievements = db.collection("achievements");
     const users = db.collection("users");
 
     // 1. Record the solve. A duplicate means it was solved before.
@@ -52,13 +54,16 @@ export async function awardSolve({ userId, challenge, languageId }) {
     );
     if (!claimed) {
       const user = await users.findOne({ _id: userObjectId });
-      return { awarded: 0, bonus: 0, alreadySolved: true, total: user?.points ?? null };
+      return { awarded: 0, bonus: 0, achievements: [], alreadySolved: true, total: user?.points ?? null };
     }
 
-    // 3. First time in this language? Only if this is the member's earliest
-    //    solve in it (so two submissions at once can't both miss out), and
-    //    the unique index lets just one request record the bonus.
+    // 3. First time in this language? Then they've learned it: unlock the
+    //    achievement. Only the member's earliest solve in the language counts
+    //    (so two submissions at once can't both miss out), and the unique
+    //    index lets just one request record it.
     let bonus = 0;
+    const unlocked = [];
+    const learned = getAchievement(learnedLanguageKey(languageId));
     const usedBefore = await solves.countDocuments(
       {
         userId: userObjectId,
@@ -71,32 +76,36 @@ export async function awardSolve({ userId, challenge, languageId }) {
       },
       { limit: 1 }
     );
-    if (!usedBefore && NEW_LANGUAGE_BONUS > 0) {
+    if (!usedBefore && learned) {
       try {
-        await bonuses.insertOne({
+        await achievements.insertOne({
           userId: userObjectId,
-          languageId,
+          key: learned.key,
+          points: learned.points,
           challengeId: challenge.id,
-          points: NEW_LANGUAGE_BONUS,
-          awardedAt: new Date(),
+          languageId,
+          unlockedAt: new Date(),
         });
-        bonus = NEW_LANGUAGE_BONUS;
+        bonus += learned.points;
+        unlocked.push({ key: learned.key, title: learned.title, points: learned.points });
       } catch (error) {
         if (error.code !== DUPLICATE_KEY) throw error;
       }
     }
 
-    // 4. Add the points. If that fails, undo the claim and bonus so a retry works.
+    // 4. Add the points. If that fails, undo the claim and achievements so a retry works.
     try {
       const user = await users.findOneAndUpdate(
         { _id: userObjectId },
         { $inc: { points: claimed.points + bonus } },
         { returnDocument: "after" }
       );
-      return { awarded: claimed.points, bonus, alreadySolved: false, total: user?.points ?? null };
+      return { awarded: claimed.points, bonus, achievements: unlocked, alreadySolved: false, total: user?.points ?? null };
     } catch (error) {
       await solves.updateOne(key, { $set: { awarded: false } }).catch(() => {});
-      if (bonus) await bonuses.deleteOne({ userId: userObjectId, languageId }).catch(() => {});
+      for (const achievement of unlocked) {
+        await achievements.deleteOne({ userId: userObjectId, key: achievement.key }).catch(() => {});
+      }
       throw error;
     }
   });
@@ -126,4 +135,15 @@ export async function getSolveSummary(userId) {
 // Returns a Map: challengeId -> [languageId, ...]
 export async function getSolvedLanguages(userId) {
   return (await getSolveSummary(userId)).byChallenge;
+}
+
+// A member's unlocked achievements, newest first: [{ key, points, unlockedAt }]
+export async function getAchievements(userId) {
+  return withDb((db) =>
+    db
+      .collection("achievements")
+      .find({ userId: new ObjectId(userId) }, { projection: { _id: 0, key: 1, points: 1, unlockedAt: 1 } })
+      .sort({ unlockedAt: -1 })
+      .toArray()
+  );
 }

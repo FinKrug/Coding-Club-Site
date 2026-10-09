@@ -85,6 +85,9 @@ function Navbar() {
           <Link href="/problems" className="nav-link">
             Challenges
           </Link>
+          <Link href="/leaderboard" className="nav-link">
+            Leaderboard
+          </Link>
           <Link href="/resources" className="nav-link">
             Resources
           </Link>

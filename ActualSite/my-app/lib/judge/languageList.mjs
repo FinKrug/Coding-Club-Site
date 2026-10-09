@@ -6,8 +6,8 @@
 //   taught in class (Python, Java, C#)   1x
 //   taught a little (C++)                1.25x
 //   not taught (everything else)         1.5x
-// plus a one-time bonus the first time a member solves anything in a
-// language they've never used on the site (NEW_LANGUAGE_BONUS).
+// plus a "Learned <language>" achievement (lib/achievements.mjs) the first
+// time a member solves anything in a language.
 //
 // Order = order in the editor's dropdown.
 export const LANGUAGE_LIST = [
@@ -21,10 +21,6 @@ export const LANGUAGE_LIST = [
   { id: 73, key: "rust", name: "Rust", monaco: "rust", multiplier: 1.5, tier: "new" },
   { id: 60, key: "go", name: "Go", monaco: "go", multiplier: 1.5, tier: "new" },
 ];
-
-// Points for a member's first solve (of any challenge) in a language they've
-// never used on the site before. Once per language per member.
-export const NEW_LANGUAGE_BONUS = 25;
 
 export function languageMultiplier(languageId) {
   const language = LANGUAGE_LIST.find((l) => l.id === Number(languageId));

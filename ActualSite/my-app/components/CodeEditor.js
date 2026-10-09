@@ -15,7 +15,8 @@ import dynamic from "next/dynamic";
 import { connectLanguageServer } from "@/lib/lspClient";
 import { runCode } from "@/lib/judge0Client";
 import { getRunnerSettings, subscribeRunnerSettings } from "@/lib/runnerSettings";
-import { LANGUAGE_LIST, NEW_LANGUAGE_BONUS, pointsFor } from "@/lib/judge/languageList.mjs";
+import { LANGUAGE_LIST, pointsFor } from "@/lib/judge/languageList.mjs";
+import { LEARNED_LANGUAGE_POINTS } from "@/lib/achievements.mjs";
 import TestResults from "./TestResults";
 
 const MonacoEditor = dynamic(
@@ -235,7 +236,7 @@ export default function CodeEditor({
           <option key={language.id} value={language.id}>
             {language.name}
             {hasTests ? ` (${pointsFor(basePoints, language.id)} pts` : ""}
-            {hasTests && used && !used.includes(language.id) ? ` +${NEW_LANGUAGE_BONUS} new` : ""}
+            {hasTests && used && !used.includes(language.id) ? ` +${LEARNED_LANGUAGE_POINTS} for learning it` : ""}
             {hasTests ? ")" : ""}
             {solved.includes(language.id) ? " ✓ solved" : ""}
           </option>
@@ -244,7 +245,8 @@ export default function CodeEditor({
       {hasTests && (
         <p className="editor-hint">
           Languages you don&apos;t learn in class are worth more: C++ 1.25×, JavaScript, TypeScript, C, Rust and Go
-          1.5×. Your first solve in a language you haven&apos;t used here earns +{NEW_LANGUAGE_BONUS}.
+          1.5×. Your first solve in a language unlocks its &quot;Learned&quot; achievement: +{LEARNED_LANGUAGE_POINTS} for
+          learning it.
         </p>
       )}
 

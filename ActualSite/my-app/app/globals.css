@@ -1300,6 +1300,355 @@ button {
   color: var(--color-text);
 }
 
+/* ---------- Achievements ---------- */
+
+.achievement-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-accent-soft), transparent);
+  border: 1px solid var(--color-accent);
+}
+
+.achievement-medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 1.1rem;
+}
+
+.achievement-banner-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-accent);
+}
+
+.achievement-banner-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.achievement-banner-points {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.account-achievements {
+  margin-top: 1.25rem;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.achievement-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-border);
+  opacity: 0.55;
+}
+
+.achievement-badge .achievement-medal {
+  background: var(--color-bg-elevated-2);
+  color: var(--color-text-faint);
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.95rem;
+}
+
+.achievement-badge.unlocked {
+  opacity: 1;
+  border: 1px solid var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.achievement-badge.unlocked .achievement-medal {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.achievement-badge-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.achievement-badge-detail {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ---------- Leaderboard ---------- */
+
+.leaderboard-hero {
+  padding-bottom: 2rem;
+}
+
+.lb-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.lb-tab {
+  padding: 0.45rem 1.1rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.lb-tab:hover {
+  color: var(--color-text);
+  border-color: var(--color-text-faint);
+}
+
+.lb-tab.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.lb-table-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.lb-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lb-table th {
+  text-align: left;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.lb-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.lb-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.lb-table .lb-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lb-table .lb-rank {
+  width: 3.5rem;
+}
+
+.lb-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.4rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-elevated-2);
+  color: var(--color-text-muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.lb-table tr.top-1 .lb-rank-badge {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.lb-table tr.top-2 .lb-rank-badge,
+.lb-table tr.top-3 .lb-rank-badge {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.lb-name {
+  font-weight: 600;
+}
+
+.lb-points {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-accent);
+}
+
+.lb-extra {
+  color: var(--color-text-muted);
+}
+
+.lb-table tr.is-you td {
+  background: var(--color-accent-soft);
+}
+
+.lb-you {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+}
+
+.lb-table tr.lb-gap td {
+  text-align: center;
+  color: var(--color-text-faint);
+  padding: 0.3rem;
+}
+
+.lb-empty,
+.lb-footnote {
+  max-width: 760px;
+  margin: 1.25rem auto;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.lb-footnote {
+  font-size: 0.85rem;
+  margin-bottom: 3rem;
+}
+
+.lb-empty a,
+.lb-footnote a,
+.first-solvers-link,
+.account-leaderboard a {
+  color: var(--color-accent);
+}
+
+@media (max-width: 560px) {
+  .lb-table .lb-extra {
+    display: none;
+  }
+
+  .lb-table th,
+  .lb-table td {
+    padding: 0.65rem 0.6rem;
+  }
+}
+
+/* "Solved by N members" panel on a challenge page */
+.first-solvers {
+  margin-top: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-elevated);
+}
+
+.first-solvers h3 {
+  margin: 0 0 0.6rem;
+  font-size: 1rem;
+}
+
+.first-solvers ol {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.first-solvers li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.first-solvers-place {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-elevated-2);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.first-solvers li:first-child .first-solvers-place {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.first-solvers-name {
+  font-weight: 600;
+}
+
+.first-solvers-detail {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.first-solvers-empty {
+  margin: 0 0 0.6rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.first-solvers-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.account-leaderboard {
+  margin-top: 1.25rem;
+}
+
+.account-inline-form {
+  margin-top: 0.6rem;
+}
+
+.account-error {
+  color: var(--color-danger);
+}
+
 /* ---------- Footer ---------- */
 
 .site-footer {

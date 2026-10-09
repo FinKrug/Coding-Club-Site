@@ -7,6 +7,7 @@
 // Reads MONGODB_URI / MONGODB_DB from .env.local.
 
 import { MongoClient } from "mongodb";
+import { learnedLanguageKey } from "../lib/achievements.mjs";
 
 const uri = process.env.MONGODB_URI;
 if (!uri) {
@@ -144,8 +145,38 @@ try {
   // Points are earned once per challenge per language. This unique index is
   // what guarantees it (see lib/points.js).
   await db.collection("solves").createIndex({ userId: 1, challengeId: 1, languageId: 1 }, { unique: true });
-  // The first-solve-in-a-new-language bonus is paid once per user per language.
-  await db.collection("languageBonuses").createIndex({ userId: 1, languageId: 1 }, { unique: true });
+  // Speeds up the "Solved by N members / first to solve" list on challenge pages.
+  await db.collection("solves").createIndex({ challengeId: 1, solvedAt: 1 });
+  // Each achievement (e.g. "Learned Rust") is unlocked once per member.
+  const achievements = db.collection("achievements");
+  await achievements.createIndex({ userId: 1, key: 1 }, { unique: true });
+
+  // Older versions stored the first-solve-in-a-language reward in a
+  // "languageBonuses" collection. Move any of those over to achievements
+  // (same points, so totals don't change). Safe to re-run. Once the new
+  // version is deployed you can delete "languageBonuses" in Atlas.
+  const oldBonuses = await db.listCollections({ name: "languageBonuses" }).toArray();
+  if (oldBonuses.length) {
+    let moved = 0;
+    for await (const bonus of db.collection("languageBonuses").find({})) {
+      const key = learnedLanguageKey(bonus.languageId);
+      if (!key) continue;
+      const result = await achievements.updateOne(
+        { userId: bonus.userId, key },
+        {
+          $setOnInsert: {
+            points: bonus.points,
+            challengeId: bonus.challengeId,
+            languageId: bonus.languageId,
+            unlockedAt: bonus.awardedAt || new Date(),
+          },
+        },
+        { upsert: true }
+      );
+      if (result.upsertedCount) moved += 1;
+    }
+    console.log(`Moved ${moved} new-language bonus(es) over to "Learned <language>" achievements.`);
+  }
 
   console.log("Indexes are in place. You're good to go.");
 } catch (error) {

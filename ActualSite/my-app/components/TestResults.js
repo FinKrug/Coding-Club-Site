@@ -17,12 +17,24 @@ function PointsBanner({ points }) {
     );
   }
   const multiplier = language && language.multiplier !== 1 ? ` (${language.multiplier}× for ${name})` : "";
+  const unlocked = points.achievements || [];
   return (
-    <div className="points-banner earned">
-      +{points.awarded} points{multiplier}
-      {points.bonus > 0 ? ` + ${points.bonus} for your first ${name} solve` : ""}!
-      {points.total !== null && points.total !== undefined ? ` You now have ${points.total.toLocaleString()}.` : ""}
-    </div>
+    <>
+      <div className="points-banner earned">
+        +{points.awarded} points{multiplier}!
+        {points.total !== null && points.total !== undefined ? ` You now have ${points.total.toLocaleString()}.` : ""}
+      </div>
+      {unlocked.map((achievement) => (
+        <div key={achievement.key} className="achievement-banner">
+          <span className="achievement-medal" aria-hidden="true">★</span>
+          <div>
+            <div className="achievement-banner-label">Achievement unlocked</div>
+            <div className="achievement-banner-title">{achievement.title}</div>
+            <div className="achievement-banner-points">+{achievement.points} points for learning {name}</div>
+          </div>
+        </div>
+      ))}
+    </>
   );
 }
 

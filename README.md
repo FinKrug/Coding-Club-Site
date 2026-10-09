@@ -329,13 +329,24 @@ A **Submit** that passes every test earns points, **once per challenge per langu
 | C++ (taught a little) | 1.25× (13) |
 | JavaScript, TypeScript, C, Rust, Go | 1.5× (15) |
 
-On top of that, the **first time** a member solves anything in a language they've never used on the site, they get a one-time **+25 bonus** (once per language).
+## Achievements
 
-- Each award is saved in `solves` (who solved which challenge in which language, and what it earned), and each bonus in `languageBonuses`. Unique indexes on both make double-paying impossible, even with a double-clicked Submit. **Run `npm run db:setup` after updating** so the indexes exist.
-- `users.points` is the running total. `npm run points:recalc` shows anyone whose total doesn't match their records, and `-- --fix` corrects them.
-- The multipliers and the bonus live in `lib/judge/languageList.mjs` (`multiplier` on each language and `NEW_LANGUAGE_BONUS`). After changing them, `npm run points:recalc -- --reprice --fix` re-prices points already earned under the new rules, and gives everyone their first-language bonuses.
+The **first time** a member solves anything in a language, they unlock its **"Learned <language>" achievement** and get **+25 points for learning it** (one per language, so up to 9). Members see which ones they have, and which are still locked, on their Account page, and a banner pops up when they unlock one.
+
+- Each award is saved in `solves` (who solved which challenge in which language, and what it earned), and each achievement in `achievements`. Unique indexes on both make double-paying impossible, even with a double-clicked Submit. **Run `npm run db:setup` after updating** so the indexes exist (it also moves anything in the old `languageBonuses` collection over to achievements; after that you can delete `languageBonuses` in Atlas).
+- `users.points` is the running total of solves plus achievements. `npm run points:recalc` shows anyone whose total doesn't match their records, and `-- --fix` corrects them.
+- The multipliers live in `lib/judge/languageList.mjs` (`multiplier` on each language). Achievements and their points live in `lib/achievements.mjs` (`LEARNED_LANGUAGE_POINTS`). After changing either, `npm run points:recalc -- --reprice --fix` re-prices points already earned under the new rules, and unlocks any "Learned" achievements members should already have.
 - Challenge `points` in Atlas sets the base value (defaults to 10). Results are rounded, e.g. 1.25 × 10 = 13.
 - To give or take points by hand for now, edit the user's `points` in Atlas. Note that `points:recalc -- --fix` will undo manual edits.
+
+## Leaderboard
+
+`/leaderboard` (in the nav bar) ranks members by **points earned** from solves and achievements, with an **All time** tab and a **this month** tab (months use Utah time). It's worked out from the `solves` and `achievements` records, not `users.points`, so spending points in the shop won't drop anyone down. Equal points share a rank.
+
+- Other visitors see first name + last initial ("Finley K."), points, challenges solved and languages used. Never emails.
+- Each challenge page shows "Solved by N members" and the first 5 to solve it.
+- Members can hide themselves from both on their Account page (`users.hideFromLeaderboard`). They still earn points.
+- Code: `lib/leaderboard.js`. Top 50 are shown; a signed-in member below that sees their own row at the bottom.
 
 ---
 
