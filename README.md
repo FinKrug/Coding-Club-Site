@@ -217,7 +217,9 @@ npx wrangler secret put GOOGLE_CLIENT_ID
 npx wrangler secret put GOOGLE_CLIENT_SECRET
 ```
 
-`EMAIL_FROM` and `GOOGLE_SIGNIN_ENABLED` aren't secret. Add them under `vars` in `wrangler.jsonc` next to `JUDGE0_URL`, or as plain variables in the dashboard. (Or set everything in the Cloudflare dashboard: your Worker → *Settings → Variables and Secrets*.) Use a **different** `SESSION_SECRET` and `PASSWORD_PEPPER` in production than on your laptop. For `npm run preview`, put the same values in `.dev.vars`.
+`EMAIL_FROM` and `GOOGLE_SIGNIN_ENABLED` aren't secret. Add them under `vars` in `wrangler.jsonc` next to `JUDGE0_URL`, or as plain variables in the dashboard. (Or set everything in the Cloudflare dashboard: your Worker → *Settings → Variables and Secrets*.) Use a **different** `SESSION_SECRET` in production than on your laptop. **`PASSWORD_PEPPER` must be the same everywhere that uses the same database**: local development and the live site share one Atlas database, so a different pepper would make every existing password stop working. For `npm run preview`, put the same values in `.dev.vars`.
+
+Heads-up: `npm run deploy` also copies the values in your `.env.local` into the deployed site as fallbacks. They stay on the server, never reaching the browser, but it means the live site uses your local settings for anything you haven't set in Cloudflare. Settings made in Cloudflare always win.
 
 After updating the site, run `npm run db:setup` again: it adds the one-account-per-email rule and the table for emailed codes.
 
@@ -282,7 +284,7 @@ npm run db:seed    # copies the starter challenges in data/challenges.json into 
 | `function` | for tests | The function members write: its `name`, `params` (each with a `name` and `type`) and `returns` type. See below. |
 | `tests` | for tests | The test cases. See below. |
 | `week` | no | Groups challenges on the list page, e.g. `"Week 2"` (defaults to Week 1). |
-| `points` | no | Base points for solving it (defaults to 10). Solving in Python, Java or C# earns 1.5× (rounded). |
+| `points` | no | Base points for solving it (defaults to 10). Worth more in languages not taught in class; see **Points**. |
 | `timeLimitSeconds` | no | How long the whole test run may take, 1 to 10 seconds (defaults to 2). Raise it for challenges with big stress tests. |
 | `published` | no | `false` hides it while you're still writing it. |
 | `examples` | no | Hand-written `{ "input": "...", "output": "..." }` examples. If you leave this out, the page shows the visible tests as examples instead. |
@@ -319,12 +321,20 @@ To edit a challenge, click the pencil on its document in Atlas. To remove one, d
 
 # Points
 
-A **Submit** that passes every test earns points, **once per challenge per language**. Solving Hello World in Python earns its Python points, solving it again in Python earns nothing, and solving it in Java earns the Java points too. Python, Java and C# earn **1.5×** the challenge's `points` (rounded). Other languages earn 1×. Run Code never earns points.
+A **Submit** that passes every test earns points, **once per challenge per language**. Points are set up to reward learning languages you *don't* get in class:
 
-- Each award is saved in the `solves` collection (who solved which challenge in which language, and how many points it earned). Members see their solves on challenge pages, the challenge list and their account page.
-- A unique index on `solves` makes it impossible to earn the same points twice, even with a double-clicked Submit. **Run `npm run db:setup` after updating** so that index exists.
-- `users.points` is the running total. If a total ever looks wrong, `npm run points:recalc` shows who's off, and `npm run points:recalc -- --fix` rebuilds every total from `solves`.
-- The 1.5× multiplier and which languages get it live in `lib/judge/languageList.mjs` (`PRIORITY_MULTIPLIER` and `priority: true`).
+| Language | Worth (10-point challenge) |
+| --- | --- |
+| Python, Java, C# (taught at Neumont) | 1× (10) |
+| C++ (taught a little) | 1.25× (13) |
+| JavaScript, TypeScript, C, Rust, Go | 1.5× (15) |
+
+On top of that, the **first time** a member solves anything in a language they've never used on the site, they get a one-time **+25 bonus** (once per language).
+
+- Each award is saved in `solves` (who solved which challenge in which language, and what it earned), and each bonus in `languageBonuses`. Unique indexes on both make double-paying impossible, even with a double-clicked Submit. **Run `npm run db:setup` after updating** so the indexes exist.
+- `users.points` is the running total. `npm run points:recalc` shows anyone whose total doesn't match their records, and `-- --fix` corrects them.
+- The multipliers and the bonus live in `lib/judge/languageList.mjs` (`multiplier` on each language and `NEW_LANGUAGE_BONUS`). After changing them, `npm run points:recalc -- --reprice --fix` re-prices points already earned under the new rules, and gives everyone their first-language bonuses.
+- Challenge `points` in Atlas sets the base value (defaults to 10). Results are rounded, e.g. 1.25 × 10 = 13.
 - To give or take points by hand for now, edit the user's `points` in Atlas. Note that `points:recalc -- --fix` will undo manual edits.
 
 ---

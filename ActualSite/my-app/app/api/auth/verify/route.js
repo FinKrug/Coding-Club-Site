@@ -1,6 +1,6 @@
 import { withDb } from "@/lib/mongodb";
 import { redeemCode, CODE_ERRORS } from "@/lib/authCodes";
-import { jsonError, normalizeEmail, readJson, rejectCrossSite, signedInResponse } from "@/lib/authHelpers";
+import { jsonError, normalizeEmail, readJson, rejectCrossSite, signedInResponse, serverErrorResponse } from "@/lib/authHelpers";
 
 // POST /api/auth/verify  { email, code, returnTo }
 // Step 2 of creating an account: checks the emailed code, creates the
@@ -56,7 +56,6 @@ export async function POST(request) {
     if (result.error) return jsonError(result.error);
     return signedInResponse(result.user, body.returnTo);
   } catch (error) {
-    console.error("Verification failed:", error);
-    return jsonError("Something went wrong. Please try again.", 500);
+    return serverErrorResponse(error, "confirm your code");
   }
 }

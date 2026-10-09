@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { getChallenge } from "@/lib/challenges";
 import { getSession } from "@/lib/session";
-import { getSolvedLanguages } from "@/lib/points";
-import { LANGUAGE_LIST, PRIORITY_MULTIPLIER, pointsFor } from "@/lib/judge/languageList.mjs";
+import { getSolveSummary } from "@/lib/points";
+import { LANGUAGE_LIST, NEW_LANGUAGE_BONUS, pointsFor } from "@/lib/judge/languageList.mjs";
 import CodeEditor from "@/components/CodeEditor";
 import InlineText from "@/components/InlineText";
 
@@ -37,18 +37,22 @@ export default async function ProblemPage({ params }) {
 
   if (!problem) notFound();
 
-  // Which languages the signed-in member has already solved this in.
+  // Which languages the signed-in member has solved this in, and which
+  // languages they've used at all (for the first-solve bonus).
   let solvedLanguages = [];
+  let usedLanguages = null;
   const session = await getSession();
   if (session && problem.tests.hasTests) {
     try {
-      solvedLanguages = (await getSolvedLanguages(session.userId, [problem.id])).get(problem.id) || [];
+      const summary = await getSolveSummary(session.userId);
+      solvedLanguages = summary.byChallenge.get(problem.id) || [];
+      usedLanguages = [...summary.languages];
     } catch (error) {
       console.error("Failed to load solves:", error);
     }
   }
   const solvedNames = LANGUAGE_LIST.filter((l) => solvedLanguages.includes(l.id)).map((l) => l.name);
-  const bonusPoints = pointsFor(problem.points, LANGUAGE_LIST.find((l) => l.priority).id);
+  const topPoints = Math.max(...LANGUAGE_LIST.map((l) => pointsFor(problem.points, l.id)));
 
   // Blank lines in the description start a new paragraph. `code` and
   // **bold** work inside the text.
@@ -74,7 +78,7 @@ export default async function ProblemPage({ params }) {
           </span>
           {problem.tests.hasTests && (
             <span className="problem-points">
-              {problem.points} pts · {bonusPoints} pts in Python, Java or C# ({PRIORITY_MULTIPLIER}×)
+              {problem.points}–{topPoints} pts depending on language · +{NEW_LANGUAGE_BONUS} for a language that&apos;s new to you
             </span>
           )}
         </div>
@@ -132,6 +136,7 @@ export default async function ProblemPage({ params }) {
         starters={tests.starters}
         supportedLanguages={tests.languages}
         solvedLanguages={solvedLanguages}
+        usedLanguages={usedLanguages}
         basePoints={problem.points}
       />
     </div>

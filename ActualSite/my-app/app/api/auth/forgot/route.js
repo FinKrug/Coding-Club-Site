@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { withDb } from "@/lib/mongodb";
 import { createCode, CodeCooldownError } from "@/lib/authCodes";
 import { sendCodeEmail, EmailError } from "@/lib/email";
-import { jsonError, normalizeEmail, readJson, rejectCrossSite } from "@/lib/authHelpers";
+import { jsonError, normalizeEmail, readJson, rejectCrossSite, serverErrorResponse } from "@/lib/authHelpers";
 
 // POST /api/auth/forgot  { email }
 // Emails a password-reset code if there's an account with that email. It
@@ -26,8 +26,7 @@ export async function POST(request) {
   } catch (error) {
     if (error instanceof CodeCooldownError) return jsonError(error.message, 429);
     if (error instanceof EmailError) return jsonError(error.message, 502);
-    console.error("Forgot password failed:", error);
-    return jsonError("Something went wrong. Please try again.", 500);
+    return serverErrorResponse(error, "send a reset code");
   }
   return NextResponse.json({ ok: true, email });
 }

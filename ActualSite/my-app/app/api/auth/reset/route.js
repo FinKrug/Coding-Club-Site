@@ -1,7 +1,7 @@
 import { withDb } from "@/lib/mongodb";
 import { hashPassword } from "@/lib/password";
 import { redeemCode, CODE_ERRORS } from "@/lib/authCodes";
-import { jsonError, normalizeEmail, passwordProblem, readJson, rejectCrossSite, signedInResponse } from "@/lib/authHelpers";
+import { jsonError, normalizeEmail, passwordProblem, readJson, rejectCrossSite, signedInResponse, serverErrorResponse } from "@/lib/authHelpers";
 
 // POST /api/auth/reset  { email, code, password, returnTo }
 // Sets a new password using the code from /api/auth/forgot, then signs in.
@@ -35,7 +35,6 @@ export async function POST(request) {
     if (result.error) return jsonError(result.error);
     return signedInResponse(result.user, body.returnTo);
   } catch (error) {
-    console.error("Password reset failed:", error);
-    return jsonError("Something went wrong. Please try again.", 500);
+    return serverErrorResponse(error, "reset your password");
   }
 }

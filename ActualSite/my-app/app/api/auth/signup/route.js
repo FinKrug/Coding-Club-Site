@@ -3,7 +3,7 @@ import { withDb } from "@/lib/mongodb";
 import { hashPassword } from "@/lib/password";
 import { createCode, CodeCooldownError } from "@/lib/authCodes";
 import { sendCodeEmail, EmailError } from "@/lib/email";
-import { cleanName, jsonError, normalizeEmail, passwordProblem, readJson, rejectCrossSite } from "@/lib/authHelpers";
+import { cleanName, jsonError, normalizeEmail, passwordProblem, readJson, rejectCrossSite, serverErrorResponse } from "@/lib/authHelpers";
 
 // POST /api/auth/signup  { name, email, password }
 // Step 1 of creating an account: emails a 6-digit code to the address.
@@ -39,7 +39,6 @@ export async function POST(request) {
   } catch (error) {
     if (error instanceof CodeCooldownError) return jsonError(error.message, 429);
     if (error instanceof EmailError) return jsonError(error.message, 502);
-    console.error("Sign-up failed:", error);
-    return jsonError("Something went wrong. Please try again.", 500);
+    return serverErrorResponse(error, "create your account");
   }
 }

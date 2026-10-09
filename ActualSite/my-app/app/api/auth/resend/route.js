@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { withDb } from "@/lib/mongodb";
 import { createCode, CodeCooldownError } from "@/lib/authCodes";
 import { sendCodeEmail, EmailError } from "@/lib/email";
-import { jsonError, normalizeEmail, readJson, rejectCrossSite } from "@/lib/authHelpers";
+import { jsonError, normalizeEmail, readJson, rejectCrossSite, serverErrorResponse } from "@/lib/authHelpers";
 
 // POST /api/auth/resend  { email, purpose: "signup" | "reset" }
 // Sends a fresh code (at most once a minute).
@@ -29,7 +29,6 @@ export async function POST(request) {
   } catch (error) {
     if (error instanceof CodeCooldownError) return jsonError(error.message, 429);
     if (error instanceof EmailError) return jsonError(error.message, 502);
-    console.error("Resend failed:", error);
-    return jsonError("Something went wrong. Please try again.", 500);
+    return serverErrorResponse(error, "send a new code");
   }
 }

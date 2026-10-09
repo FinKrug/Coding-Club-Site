@@ -44,6 +44,29 @@ function Field({ label, hint, ...input }) {
   );
 }
 
+// A password box with a Show / Hide button.
+function PasswordField({ label, hint, ...input }) {
+  const [visible, setVisible] = useState(false);
+  return (
+    <label className="auth-field">
+      <span>{label}</span>
+      <div className="auth-password">
+        <input {...input} type={visible ? "text" : "password"} />
+        <button
+          type="button"
+          className="auth-password-toggle"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={visible ? "Hide password" : "Show password"}
+          aria-pressed={visible}
+        >
+          {visible ? "Hide" : "Show"}
+        </button>
+      </div>
+      {hint && <small>{hint}</small>}
+    </label>
+  );
+}
+
 function Status({ error, notice }) {
   if (error) return <p className="auth-error" role="alert">{error}</p>;
   if (notice) return <p className="auth-notice" role="status">{notice}</p>;
@@ -83,7 +106,7 @@ export function LoginForm({ returnTo, googleEnabled }) {
       {googleEnabled && <GoogleButton returnTo={returnTo} />}
       <form onSubmit={submit}>
         <Field label="Email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Field label="Password" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+        <PasswordField label="Password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
         <Status error={error} />
         <button className="btn-primary auth-submit" disabled={busy}>{busy ? "Signing in..." : "Sign in"}</button>
       </form>
@@ -137,9 +160,8 @@ export function SignupForm({ returnTo, googleEnabled }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <Field
+        <PasswordField
           label="Password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={MIN_PASSWORD}
@@ -307,9 +329,8 @@ export function ResetForm({ email, returnTo }) {
           value={code}
           onChange={(e) => setCode(e.target.value)}
         />
-        <Field
+        <PasswordField
           label="New password"
-          type="password"
           autoComplete="new-password"
           required
           minLength={MIN_PASSWORD}

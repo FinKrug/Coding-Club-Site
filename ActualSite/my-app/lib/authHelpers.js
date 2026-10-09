@@ -71,3 +71,30 @@ export async function signedInResponse(user, returnTo) {
   response.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
   return response;
 }
+
+// Turns an unexpected server error into a message that says what's actually
+// wrong, so "Something went wrong" isn't the only clue. The full error is
+// always logged too (Cloudflare dashboard -> Workers -> coding-club-site -> Logs).
+export function serverErrorResponse(error, action = "do that") {
+  console.error(`Auth error while trying to ${action}:`, error);
+  const text = String((error && error.message) || "");
+  const name = String((error && error.name) || "");
+
+  const missing = ["MONGODB_URI", "PASSWORD_PEPPER", "SESSION_SECRET"].find((key) => text.includes(key));
+  if (missing) {
+    return jsonError(
+      `Sign-in isn't fully set up on this site yet: the ${missing} setting is missing. A club officer needs to add it in Cloudflare.`,
+      503
+    );
+  }
+  if (/authentication failed|bad auth/i.test(text)) {
+    return jsonError("The site couldn't log in to its database (wrong database password in MONGODB_URI). A club officer needs to fix it.", 503);
+  }
+  if (name.startsWith("Mongo") || /ECONNREFUSED|ETIMEDOUT|ENOTFOUND|server selection/i.test(text)) {
+    return jsonError(
+      `The site couldn't reach its database just now. Please try again in a minute. (Details: ${name}: ${text.slice(0, 160)})`,
+      503
+    );
+  }
+  return jsonError(`Something went wrong on our end while trying to ${action} (${name || "error"}). Please try again.`, 500);
+}

@@ -41,7 +41,17 @@ export async function sendEmail({ to, subject, text, html }) {
   if (!response.ok) {
     const details = await response.text();
     console.error("Resend error:", response.status, details);
-    throw new EmailError("We couldn't send the email. Please try again in a minute.");
+    // Resend explains what's wrong (unverified domain, bad API key, ...).
+    // Show it, since it's almost always a setup problem only an officer can fix.
+    let reason = "";
+    try {
+      reason = JSON.parse(details).message || "";
+    } catch {
+      reason = details.slice(0, 200);
+    }
+    throw new EmailError(
+      `We couldn't send the email. Please try again in a minute.${reason ? ` (Resend said: ${reason})` : ` (Resend error ${response.status})`}`
+    );
   }
 }
 

@@ -1,16 +1,21 @@
 import { ObjectId } from "mongodb";
 import { withDb } from "@/lib/mongodb";
-import { pointsFor, PRIORITY_MULTIPLIER } from "@/lib/judge/languageList.mjs";
+import { pointsFor, NEW_LANGUAGE_BONUS } from "@/lib/judge/languageList.mjs";
 
 // Points are earned once per challenge per language: the first passing
-// Submit in Python earns the Python points, a later pass in Java earns the
-// Java points, and re-submitting in Python again earns nothing.
+// Submit in Rust earns the Rust points, a later pass in Java earns the Java
+// points, and re-submitting in Rust again earns nothing. How much each
+// language is worth lives in lib/judge/languageList.mjs.
 //
-// Each award is recorded in the `solves` collection, which has a unique
-// index on (userId, challengeId, languageId); see scripts/setup-db.mjs.
-// That index is what stops double-awarding, even if someone double-clicks
-// Submit. users.points is a running total of solves; if it ever drifts,
-// `npm run points:recalc` rebuilds it from the solves.
+// On top of that, the first time a member solves anything in a language
+// they've never used here, they get a one-time NEW_LANGUAGE_BONUS.
+//
+// Records:
+//   solves          one per (user, challenge, language), unique index
+//   languageBonuses one per (user, language), unique index
+// Both have unique indexes (scripts/setup-db.mjs), which is what stops
+// double-awarding even if someone double-clicks Submit. users.points is a
+// running total of both; `npm run points:recalc` rebuilds it if it drifts.
 //
 // Server-only.
 
@@ -22,6 +27,7 @@ export async function awardSolve({ userId, challenge, languageId }) {
 
   return withDb(async (db) => {
     const solves = db.collection("solves");
+    const bonuses = db.collection("languageBonuses");
     const users = db.collection("users");
 
     // 1. Record the solve. A duplicate means it was solved before.
@@ -46,38 +52,78 @@ export async function awardSolve({ userId, challenge, languageId }) {
     );
     if (!claimed) {
       const user = await users.findOne({ _id: userObjectId });
-      return { awarded: 0, alreadySolved: true, total: user?.points ?? null };
+      return { awarded: 0, bonus: 0, alreadySolved: true, total: user?.points ?? null };
     }
 
-    // 3. Add the points. If that fails, release the claim so a retry works.
+    // 3. First time in this language? Only if this is the member's earliest
+    //    solve in it (so two submissions at once can't both miss out), and
+    //    the unique index lets just one request record the bonus.
+    let bonus = 0;
+    const usedBefore = await solves.countDocuments(
+      {
+        userId: userObjectId,
+        languageId,
+        challengeId: { $ne: challenge.id },
+        $or: [
+          { solvedAt: { $lt: claimed.solvedAt } },
+          { solvedAt: claimed.solvedAt, _id: { $lt: claimed._id } },
+        ],
+      },
+      { limit: 1 }
+    );
+    if (!usedBefore && NEW_LANGUAGE_BONUS > 0) {
+      try {
+        await bonuses.insertOne({
+          userId: userObjectId,
+          languageId,
+          challengeId: challenge.id,
+          points: NEW_LANGUAGE_BONUS,
+          awardedAt: new Date(),
+        });
+        bonus = NEW_LANGUAGE_BONUS;
+      } catch (error) {
+        if (error.code !== DUPLICATE_KEY) throw error;
+      }
+    }
+
+    // 4. Add the points. If that fails, undo the claim and bonus so a retry works.
     try {
       const user = await users.findOneAndUpdate(
         { _id: userObjectId },
-        { $inc: { points: claimed.points } },
+        { $inc: { points: claimed.points + bonus } },
         { returnDocument: "after" }
       );
-      return { awarded: claimed.points, alreadySolved: false, total: user?.points ?? null };
+      return { awarded: claimed.points, bonus, alreadySolved: false, total: user?.points ?? null };
     } catch (error) {
       await solves.updateOne(key, { $set: { awarded: false } }).catch(() => {});
+      if (bonus) await bonuses.deleteOne({ userId: userObjectId, languageId }).catch(() => {});
       throw error;
     }
   });
 }
 
-// Which languages (Judge0 ids) a user has solved each challenge in.
-// Returns a Map: challengeId -> [languageId, ...]
-export async function getSolvedLanguages(userId, challengeIds = null) {
-  const filter = { userId: new ObjectId(userId) };
-  if (challengeIds) filter.challengeId = { $in: challengeIds };
+// All of a member's solves: which languages they've solved each challenge
+// in, and which languages they've used at all.
+// Returns { byChallenge: Map(challengeId -> [languageId]), languages: Set(languageId) }
+export async function getSolveSummary(userId) {
   const solves = await withDb((db) =>
-    db.collection("solves").find(filter, { projection: { _id: 0, challengeId: 1, languageId: 1 } }).toArray()
+    db
+      .collection("solves")
+      .find({ userId: new ObjectId(userId) }, { projection: { _id: 0, challengeId: 1, languageId: 1 } })
+      .toArray()
   );
   const byChallenge = new Map();
+  const languages = new Set();
   for (const solve of solves) {
     if (!byChallenge.has(solve.challengeId)) byChallenge.set(solve.challengeId, []);
     byChallenge.get(solve.challengeId).push(solve.languageId);
+    languages.add(solve.languageId);
   }
-  return byChallenge;
+  return { byChallenge, languages };
 }
 
-export { PRIORITY_MULTIPLIER };
+// Which languages a user has solved each challenge in.
+// Returns a Map: challengeId -> [languageId, ...]
+export async function getSolvedLanguages(userId) {
+  return (await getSolveSummary(userId)).byChallenge;
+}

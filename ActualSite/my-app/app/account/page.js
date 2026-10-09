@@ -89,7 +89,7 @@ export default async function AccountPage() {
           {perLanguage.length > 0 ? (
             <div className="account-languages">
               {perLanguage.map((language) => (
-                <span key={language.id} className={`account-language${language.priority ? " priority" : ""}`}>
+                <span key={language.id} className={`account-language${language.tier === "new" ? " priority" : ""}`}>
                   {language.name}: {language.count}
                 </span>
               ))}

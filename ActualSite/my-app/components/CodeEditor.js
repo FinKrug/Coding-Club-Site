@@ -15,7 +15,7 @@ import dynamic from "next/dynamic";
 import { connectLanguageServer } from "@/lib/lspClient";
 import { runCode } from "@/lib/judge0Client";
 import { getRunnerSettings, subscribeRunnerSettings } from "@/lib/runnerSettings";
-import { LANGUAGE_LIST, PRIORITY_MULTIPLIER, pointsFor } from "@/lib/judge/languageList.mjs";
+import { LANGUAGE_LIST, NEW_LANGUAGE_BONUS, pointsFor } from "@/lib/judge/languageList.mjs";
 import TestResults from "./TestResults";
 
 const MonacoEditor = dynamic(
@@ -70,6 +70,7 @@ export default function CodeEditor({
   starters = {},
   supportedLanguages = null,
   solvedLanguages = [],
+  usedLanguages = null, // languages this member has solved anything in (null = signed out)
   basePoints = 10,
 }) {
   const pathname = usePathname();
@@ -85,6 +86,7 @@ export default function CodeEditor({
   const [results, setResults] = useState(null);
   const [points, setPoints] = useState(null);
   const [solved, setSolved] = useState(solvedLanguages);
+  const [used, setUsed] = useState(usedLanguages);
   const [message, setMessage] = useState(null);
   const [busy, setBusy] = useState(null); // "run" | "submit" | null
   const [editorReady, setEditorReady] = useState(false);
@@ -196,6 +198,7 @@ export default function CodeEditor({
         setPoints({ ...data.points, languageId });
         if (data.points.awarded > 0 || data.points.alreadySolved) {
           setSolved((current) => (current.includes(languageId) ? current : [...current, languageId]));
+          setUsed((current) => (current && !current.includes(languageId) ? [...current, languageId] : current));
         }
         // Tell the navbar to refresh the point total.
         if (data.points.awarded > 0) window.dispatchEvent(new Event("ncc:points-changed"));
@@ -231,13 +234,19 @@ export default function CodeEditor({
         {shownLanguages.map((language) => (
           <option key={language.id} value={language.id}>
             {language.name}
-            {language.priority ? " ★" : ""}
-            {hasTests ? ` (${pointsFor(basePoints, language.id)} pts)` : ""}
+            {hasTests ? ` (${pointsFor(basePoints, language.id)} pts` : ""}
+            {hasTests && used && !used.includes(language.id) ? ` +${NEW_LANGUAGE_BONUS} new` : ""}
+            {hasTests ? ")" : ""}
             {solved.includes(language.id) ? " ✓ solved" : ""}
           </option>
         ))}
       </select>
-      <p className="editor-hint">★ Python, Java and C# earn {PRIORITY_MULTIPLIER}× points.</p>
+      {hasTests && (
+        <p className="editor-hint">
+          Languages you don&apos;t learn in class are worth more: C++ 1.25×, JavaScript, TypeScript, C, Rust and Go
+          1.5×. Your first solve in a language you haven&apos;t used here earns +{NEW_LANGUAGE_BONUS}.
+        </p>
+      )}
 
       <div className="monaco-container">
         <MonacoEditor

@@ -1,6 +1,6 @@
 import { withDb } from "@/lib/mongodb";
 import { fakeVerify, hashPassword, verifyPassword } from "@/lib/password";
-import { jsonError, normalizeEmail, readJson, rejectCrossSite, signedInResponse } from "@/lib/authHelpers";
+import { jsonError, normalizeEmail, readJson, rejectCrossSite, signedInResponse, serverErrorResponse } from "@/lib/authHelpers";
 
 // POST /api/auth/login  { email, password, returnTo }
 // After 5 wrong passwords in a row an account is locked for 15 minutes, to
@@ -60,7 +60,6 @@ export async function POST(request) {
     if (result.error) return jsonError(result.error, result.status);
     return signedInResponse(result.user, body.returnTo);
   } catch (error) {
-    console.error("Login failed:", error);
-    return jsonError("Something went wrong. Please try again.", 500);
+    return serverErrorResponse(error, "sign you in");
   }
 }

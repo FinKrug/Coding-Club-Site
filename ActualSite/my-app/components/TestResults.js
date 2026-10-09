@@ -16,9 +16,11 @@ function PointsBanner({ points }) {
       </div>
     );
   }
+  const multiplier = language && language.multiplier !== 1 ? ` (${language.multiplier}× for ${name})` : "";
   return (
     <div className="points-banner earned">
-      +{points.awarded} points{language && language.priority ? ` (${name} bonus)` : ""}!
+      +{points.awarded} points{multiplier}
+      {points.bonus > 0 ? ` + ${points.bonus} for your first ${name} solve` : ""}!
       {points.total !== null && points.total !== undefined ? ` You now have ${points.total.toLocaleString()}.` : ""}
     </div>
   );

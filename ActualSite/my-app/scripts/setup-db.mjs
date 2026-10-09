@@ -144,6 +144,8 @@ try {
   // Points are earned once per challenge per language. This unique index is
   // what guarantees it (see lib/points.js).
   await db.collection("solves").createIndex({ userId: 1, challengeId: 1, languageId: 1 }, { unique: true });
+  // The first-solve-in-a-new-language bonus is paid once per user per language.
+  await db.collection("languageBonuses").createIndex({ userId: 1, languageId: 1 }, { unique: true });
 
   console.log("Indexes are in place. You're good to go.");
 } catch (error) {

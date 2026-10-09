@@ -25,6 +25,12 @@ export async function withDb(fn) {
     maxPoolSize: 1,
     minPoolSize: 0,
     serverSelectionTimeoutMS: 8000,
+    connectTimeoutMS: 8000,
+    // A Worker can only have 6 connections open at once. In its default
+    // "stream" mode the driver opens two background connections per cluster
+    // server (3 servers on Atlas = 6) plus one for the query = 7, so the
+    // query can stall. "poll" uses one background connection per server.
+    serverMonitoringMode: "poll",
     appName: "coding-club-site",
   });
 
