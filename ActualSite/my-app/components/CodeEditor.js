@@ -73,6 +73,8 @@ export default function CodeEditor({
   solvedLanguages = [],
   usedLanguages = null, // languages this member has solved anything in (null = signed out)
   basePoints = 10,
+  beginner = false, // simpler layout for the club fair page (app/fair)
+  onGraded = null, // called with { result, points, mode } after Run / Submit
 }) {
   const pathname = usePathname();
   // Languages that can't handle this challenge's types are left out entirely.
@@ -195,6 +197,7 @@ export default function CodeEditor({
         return;
       }
       setResults({ ...data.result, mode });
+      if (onGraded) onGraded({ result: data.result, points: data.points, mode });
       if (data.points) {
         setPoints({ ...data.points, languageId });
         if (data.points.awarded > 0 || data.points.alreadySolved) {
@@ -242,7 +245,7 @@ export default function CodeEditor({
           </option>
         ))}
       </select>
-      {hasTests && (
+      {hasTests && !beginner && (
         <p className="editor-hint">
           Languages you don&apos;t learn in class are worth more: C++ 1.25×, JavaScript, TypeScript, C, Rust and Go
           1.5×. Your first solve in a language unlocks its &quot;Learned&quot; achievement: +{LEARNED_LANGUAGE_POINTS} for
@@ -252,7 +255,7 @@ export default function CodeEditor({
 
       <div className="monaco-container">
         <MonacoEditor
-          height="500px"
+          height={beginner ? "320px" : "500px"}
           language={currentLanguage?.monaco || "plaintext"}
           value={code}
           onChange={handleCodeChange}
@@ -260,7 +263,7 @@ export default function CodeEditor({
           theme="vs-dark"
           options={{
             minimap: { enabled: false },
-            fontSize: 14,
+            fontSize: beginner ? 16 : 14,
             automaticLayout: true,
             scrollBeyondLastLine: false,
             tabSize: 4,
@@ -269,12 +272,14 @@ export default function CodeEditor({
         />
       </div>
 
-      <div className="runner-status-row">
-        <span className="status-pill">
-          <span className={`status-dot ${lspStatus}`} />
-          <span className="lsp-status">{STATUS_LABELS[lspStatus] || ""}</span>
-        </span>
-      </div>
+      {!beginner && (
+        <div className="runner-status-row">
+          <span className="status-pill">
+            <span className={`status-dot ${lspStatus}`} />
+            <span className="lsp-status">{STATUS_LABELS[lspStatus] || ""}</span>
+          </span>
+        </div>
+      )}
 
       <div className="editor-actions">
         <button
@@ -296,7 +301,9 @@ export default function CodeEditor({
       </div>
       {hasTests && (
         <p className="editor-hint">
-          Run Code checks the example tests. Submit runs every test, including hidden ones.
+          {beginner
+            ? "Run Code tries your code on a couple of names. Submit (needs an account) runs every test and earns points."
+            : "Run Code checks the example tests. Submit runs every test, including hidden ones."}
         </p>
       )}
 

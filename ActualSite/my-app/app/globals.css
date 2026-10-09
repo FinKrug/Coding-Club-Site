@@ -2038,3 +2038,248 @@ section.info-block code,
 .back-link:hover {
   color: var(--color-accent);
 }
+
+/* ---------- Club fair page (/fair) ---------- */
+
+.fair-page a.btn-primary,
+.fair-page a.btn-ghost {
+  text-decoration: none;
+}
+
+.fair-page a.btn-primary {
+  color: var(--color-on-accent);
+}
+
+.fair-page a.btn-ghost {
+  color: var(--color-text);
+}
+
+.fair-hero {
+  text-align: center;
+  padding: 2rem 1rem 2.5rem;
+}
+
+.fair-hero .eyebrow {
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-bottom: 1rem;
+}
+
+.fair-hero h1 {
+  font-size: clamp(2.2rem, 5.5vw, 4rem);
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+.fair-hero h1 .accent {
+  color: var(--color-accent);
+}
+
+.fair-hero p {
+  max-width: 560px;
+  margin: 0 auto 1.2rem;
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+}
+
+.fair-hero .fair-discord-line {
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.fair-discord-line a,
+.fair-stuck a {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+.fair-status {
+  display: inline-block;
+  padding: 0.35rem 0.9rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.fair-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 2rem;
+  align-items: start;
+  margin-bottom: 3rem;
+}
+
+@media (max-width: 900px) {
+  .fair-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fair-steps,
+.fair-editor {
+  min-width: 0;
+}
+
+.fair-steps {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+}
+
+.fair-steps ol {
+  list-style: none;
+  counter-reset: fair-step;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.fair-steps li {
+  counter-increment: fair-step;
+  position: relative;
+  padding-left: 2.6rem;
+}
+
+.fair-steps li::before {
+  content: counter(fair-step);
+  position: absolute;
+  left: 0;
+  top: -0.1rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fair-steps li:last-child::before {
+  content: "★";
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.fair-steps h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.3rem;
+}
+
+.fair-steps p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.fair-steps code,
+.fair-win code {
+  background: var(--color-bg-elevated-2);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.85em;
+  color: #e6e6e6;
+}
+
+.fair-copyline {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.7rem 0;
+  padding: 0.6rem 0.6rem 0.6rem 0.9rem;
+  background: #111;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+}
+
+.fair-copyline code {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 1rem;
+  color: var(--color-accent);
+  overflow-wrap: anywhere;
+}
+
+.fair-copyline .btn-ghost {
+  padding: 0.35rem 0.9rem;
+  flex-shrink: 0;
+}
+
+.fair-steps .fair-note {
+  font-size: 0.85rem;
+  color: var(--color-text-faint);
+}
+
+.fair-stuck {
+  margin-top: 1.6rem;
+  border-top: 1px solid var(--color-border-soft);
+  padding-top: 1rem;
+}
+
+.fair-stuck summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.fair-stuck pre {
+  background: #111;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+  margin: 0.8rem 0 0.5rem;
+}
+
+.fair-stuck p {
+  font-size: 0.9rem;
+}
+
+.fair-win {
+  margin-top: 1rem;
+  padding: 1.3rem 1.5rem;
+  border-radius: var(--radius-md);
+  background: var(--color-success-soft);
+  border: 1px solid var(--color-success);
+}
+
+.fair-win h3 {
+  color: var(--color-success);
+  font-size: 1.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.fair-win p {
+  margin: 0;
+}
+
+.fair-win-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.fair-join .fair-meeting {
+  margin-top: 0.8rem;
+}
+
+/* The fair page's editor sits in its own grid, not .problem-layout. */
+.fair-editor .editor {
+  margin: 0;
+}

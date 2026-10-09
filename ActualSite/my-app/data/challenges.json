@@ -37,5 +37,26 @@
       { "args": [-7, -8], "expected": -15, "hidden": true },
       { "args": [1000000000, 1000000000], "expected": 2000000000, "hidden": true }
     ]
+  },
+  {
+    "id": 3,
+    "title": "Your First Program",
+    "difficulty": "Easy",
+    "week": "Club Fair",
+    "points": 10,
+    "description": "Write a function called `greet` that says hello to whoever's name it's given. `greet(\"Ada\")` should give back `Hello, Ada!`\n\nNew to coding? Replace `pass` (or the empty line between the `{ }`) with:\n\n`return \"Hello, \" + name + \"!\"`\n\nIn Java, C#, C++, JavaScript and TypeScript, put a `;` at the end of that line.",
+    "function": {
+      "name": "greet",
+      "params": [
+        { "name": "name", "type": "string" }
+      ],
+      "returns": "string"
+    },
+    "tests": [
+      { "args": ["Ada"], "expected": "Hello, Ada!" },
+      { "args": ["Neumont"], "expected": "Hello, Neumont!" },
+      { "args": ["Grace Hopper"], "expected": "Hello, Grace Hopper!", "hidden": true },
+      { "args": ["Coding Club"], "expected": "Hello, Coding Club!", "hidden": true }
+    ]
   }
 ]

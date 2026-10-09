@@ -29,6 +29,8 @@ export default function Home() {
           code editor and a Run Code button built right in. Jump into a
           challenge, or read a quick, no-jargon walkthrough first on our{" "}
           <Link href="/resources/getting-started">Start Here page</Link>.
+          Met us at the club fair?{" "}
+          <Link href="/fair">Write your first program in two minutes</Link>.
         </p>
       </section>
 
