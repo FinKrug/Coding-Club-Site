@@ -1,4 +1,5 @@
 import { withDb } from "@/lib/mongodb";
+import { cached } from "@/lib/cache";
 import {
   LANGUAGES,
   formatCall,
@@ -36,6 +37,10 @@ const PAGE_FIELDS = {
 };
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
+
+// Challenges rarely change, so they're cached for 5 minutes (lib/cache.js).
+// An edit made in Atlas can take up to that long to show on the site.
+const CHALLENGE_TTL_MS = 5 * 60 * 1000;
 
 // Fills in defaults so a hand-pasted document with optional fields left
 // out still renders cleanly.
@@ -90,6 +95,10 @@ function parseId(id) {
 }
 
 export async function listChallenges() {
+  return cached("challenges:list", CHALLENGE_TTL_MS, loadChallengeList);
+}
+
+async function loadChallengeList() {
   const docs = await withDb((db) =>
     db
       .collection("challenges")
@@ -103,7 +112,10 @@ export async function listChallenges() {
 export async function getChallenge(id) {
   const numericId = parseId(id);
   if (!numericId) return null;
+  return cached(`challenges:page:${numericId}`, CHALLENGE_TTL_MS, () => loadChallenge(numericId));
+}
 
+async function loadChallenge(numericId) {
   const doc = await withDb((db) =>
     db.collection("challenges").findOne({ id: numericId, ...VISIBLE }, { projection: PAGE_FIELDS })
   );
@@ -115,7 +127,10 @@ export async function getChallenge(id) {
 export async function getChallengeForGrading(id) {
   const numericId = parseId(id);
   if (!numericId) return null;
+  return cached(`challenges:grading:${numericId}`, CHALLENGE_TTL_MS, () => loadChallengeForGrading(numericId));
+}
 
+async function loadChallengeForGrading(numericId) {
   const doc = await withDb((db) =>
     db.collection("challenges").findOne(
       { id: numericId, ...VISIBLE },

@@ -1,7 +1,9 @@
 import { executeOnJudge0, Judge0Error } from "@/lib/judge0";
+import { getSession } from "@/lib/session";
 
 // Plain "run my code" endpoint, used for challenges that don't have tests
 // yet. Challenges with tests go through /api/challenges/[id]/run instead.
+// Needs sign-in: running code costs server time, so it's for members.
 
 export async function GET() {
   return Response.json({
@@ -10,6 +12,10 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  if (!(await getSession())) {
+    return Response.json({ error: "Sign in to run code.", signIn: true }, { status: 401 });
+  }
+
   try {
     const { code, languageId, stdin = "" } = await request.json();
 

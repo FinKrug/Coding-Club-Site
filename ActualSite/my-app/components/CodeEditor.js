@@ -10,7 +10,7 @@
 // For challenges without tests, Run Code just runs the program as-is.
 
 import { useState, useRef, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { connectLanguageServer } from "@/lib/lspClient";
 import { runCode } from "@/lib/judge0Client";
@@ -75,8 +75,19 @@ export default function CodeEditor({
   basePoints = 10,
   beginner = false, // simpler layout for the club fair page (app/fair)
   onGraded = null, // called with { result, points, mode } after Run / Submit
+  signedIn = false,
+  guestCanRun = false, // true only for the club fair challenge
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  // Running code costs server time, so guests are sent to sign in first
+  // (the fair challenge is the exception for Run Code). Their code is
+  // already saved as a draft, so it's waiting for them when they come back.
+  const needsSignIn = (mode) => !signedIn && (mode === "submit" || !guestCanRun);
+  function goToSignIn() {
+    router.push(`/login?returnTo=${encodeURIComponent(pathname || "/")}`);
+  }
   // Languages that can't handle this challenge's types are left out entirely.
   const shownLanguages = LANGUAGE_LIST.filter(
     (l) => !hasTests || !supportedLanguages || supportedLanguages.includes(l.id)
@@ -171,7 +182,12 @@ export default function CodeEditor({
   async function runPlain() {
     setOutput("Running...");
     try {
-      const { result } = await runCode({ code, languageId, stdin: "" });
+      const { result, response } = await runCode({ code, languageId, stdin: "" });
+      if (response.status === 401 && result.signIn) {
+        setOutput("");
+        goToSignIn();
+        return;
+      }
       if (result.compile_output) setOutput(result.compile_output);
       else if (result.stderr) setOutput(result.stderr);
       else if (result.error) setOutput(`Error: ${result.error}${result.details ? `\n\nDetails: ${result.details}` : ""}`);
@@ -193,6 +209,11 @@ export default function CodeEditor({
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
+        // Signed out (or the session expired): straight to the sign-in page.
+        if (data.signIn) {
+          goToSignIn();
+          return;
+        }
         setMessage({ kind: data.signIn ? "signin" : "error", text: data.error || "Something went wrong." });
         return;
       }
@@ -213,6 +234,10 @@ export default function CodeEditor({
   }
 
   async function handle(mode) {
+    if (needsSignIn(mode)) {
+      goToSignIn();
+      return;
+    }
     setBusy(mode);
     if (hasTests) await grade(mode);
     else await runPlain();
@@ -287,7 +312,7 @@ export default function CodeEditor({
           onClick={() => handle("run")}
           disabled={busy !== null}
         >
-          {busy === "run" ? "Running..." : "Run Code"}
+          {busy === "run" ? "Running..." : needsSignIn("run") ? "Sign in to Run" : "Run Code"}
         </button>
         {hasTests && (
           <button
@@ -295,7 +320,7 @@ export default function CodeEditor({
             onClick={() => handle("submit")}
             disabled={busy !== null}
           >
-            {busy === "submit" ? "Submitting..." : "Submit"}
+            {busy === "submit" ? "Submitting..." : needsSignIn("submit") ? "Sign in to Submit" : "Submit"}
           </button>
         )}
       </div>

@@ -8,6 +8,7 @@ import { LANGUAGE_LIST, pointsFor } from "@/lib/judge/languageList.mjs";
 import { LEARNED_LANGUAGE_POINTS } from "@/lib/achievements.mjs";
 import CodeEditor from "@/components/CodeEditor";
 import InlineText from "@/components/InlineText";
+import fairInfo from "@/data/fairInfo";
 
 export const dynamic = "force-dynamic";
 
@@ -178,6 +179,8 @@ export default async function ProblemPage({ params }) {
         solvedLanguages={solvedLanguages}
         usedLanguages={usedLanguages}
         basePoints={problem.points}
+        signedIn={Boolean(session)}
+        guestCanRun={problem.id === fairInfo.challengeId}
       />
     </div>
   );

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ObjectId } from "mongodb";
 import { getSession } from "@/lib/session";
 import { withDb } from "@/lib/mongodb";
+import { invalidate } from "@/lib/cache";
 import { siteOrigin } from "@/lib/oauth";
 import { rejectCrossSite } from "@/lib/authHelpers";
 
@@ -25,6 +26,9 @@ export async function POST(request) {
         .collection("users")
         .updateOne({ _id: new ObjectId(session.userId) }, { $set: { hideFromLeaderboard: !visible } })
     );
+    // Hiding/showing changes who's listed, so drop the cached rankings.
+    invalidate("leaderboard:");
+    invalidate("solvers:");
   } catch (error) {
     console.error("Failed to update leaderboard setting:", error);
     return NextResponse.redirect(new URL("/account?leaderboardError=1#leaderboard", siteOrigin(request)), 303);

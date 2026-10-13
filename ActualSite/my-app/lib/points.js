@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { withDb } from "@/lib/mongodb";
+import { invalidate } from "@/lib/cache";
 import { pointsFor } from "@/lib/judge/languageList.mjs";
 import { getAchievement, learnedLanguageKey } from "@/lib/achievements.mjs";
 
@@ -100,6 +101,9 @@ export async function awardSolve({ userId, challenge, languageId }) {
         { $inc: { points: claimed.points + bonus } },
         { returnDocument: "after" }
       );
+      // New points: drop cached rankings so this member sees themselves move up.
+      invalidate("leaderboard:");
+      invalidate(`solvers:${challenge.id}:`);
       return { awarded: claimed.points, bonus, achievements: unlocked, alreadySolved: false, total: user?.points ?? null };
     } catch (error) {
       await solves.updateOne(key, { $set: { awarded: false } }).catch(() => {});

@@ -99,7 +99,7 @@ export default function FairEditor({ signedIn, discordUrl = "", ...editorProps }
 
   return (
     <div className="fair-editor">
-      <CodeEditor {...editorProps} beginner onGraded={handleGraded} />
+      <CodeEditor {...editorProps} signedIn={signedIn} guestCanRun beginner onGraded={handleGraded} />
       <WinCard win={win} signedIn={signedIn} discordUrl={discordUrl} />
     </div>
   );

@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { withDb } from "@/lib/mongodb";
+import { cached } from "@/lib/cache";
 import { LANGUAGE_LIST } from "@/lib/judge/languageList.mjs";
 
 // The leaderboard ranks members by points EARNED (solves + achievements),
@@ -14,6 +15,9 @@ import { LANGUAGE_LIST } from "@/lib/judge/languageList.mjs";
 // Server-only.
 
 export const LEADERBOARD_SIZE = 50;
+// How long a cached leaderboard is reused. A new solve clears it right away
+// on the Worker that handled it; other Workers catch up within this time.
+const BOARD_TTL_MS = 60 * 1000;
 const CLUB_TIME_ZONE = "America/Denver"; // Neumont is in Utah
 
 // "Finley Krug" -> "Finley K."   "Finley" -> "Finley"
@@ -63,6 +67,26 @@ export function monthName(now = new Date()) {
 // }
 export async function getLeaderboard({ period = "all", viewerId = null } = {}) {
   const since = period === "month" ? startOfMonth() : null;
+  // The ranking is the same for everyone, so it's cached (lib/cache.js).
+  // Only the "You" marker below depends on who's looking.
+  const { ranked, hiddenIds } = await cached(
+    `leaderboard:${since ? since.toISOString() : "all"}`,
+    BOARD_TTL_MS,
+    () => loadRanking(since)
+  );
+
+  const viewer = viewerId ? String(viewerId) : null;
+  const youHidden = Boolean(viewer && hiddenIds.includes(viewer));
+  const all = ranked.map(({ userId, ...row }) => ({ ...row, isYou: userId === viewer }));
+
+  const rows = all.slice(0, LEADERBOARD_SIZE);
+  const you = all.slice(LEADERBOARD_SIZE).find((row) => row.isYou) || null;
+  return { rows, you, youHidden, ranked: all.length };
+}
+
+// Builds the full ranking straight from the database (no viewer involved).
+// Returns { ranked: [{ rank, userId, name, points, challenges, languages }], hiddenIds: [userId] }
+async function loadRanking(since) {
   const solveMatch = { awarded: { $ne: false }, ...(since && { solvedAt: { $gte: since } }) };
   const achievementMatch = since ? { unlockedAt: { $gte: since } } : {};
 
@@ -119,8 +143,7 @@ export async function getLeaderboard({ period = "all", viewerId = null } = {}) {
   for (const t of achievementTotals) entry(t._id).points += t.points || 0;
 
   const userInfo = new Map(users.map((u) => [String(u._id), u]));
-  const viewer = viewerId ? String(viewerId) : null;
-  const youHidden = Boolean(viewer && userInfo.get(viewer)?.hideFromLeaderboard);
+  const hiddenIds = users.filter((u) => u.hideFromLeaderboard).map((u) => String(u._id));
 
   const board = [...byUser.values()]
     .filter((e) => e.points > 0 && userInfo.has(e.userId) && !userInfo.get(e.userId).hideFromLeaderboard)
@@ -137,23 +160,25 @@ export async function getLeaderboard({ period = "all", viewerId = null } = {}) {
     if (index === 0 || e.points !== board[index - 1].points) rank = index + 1;
     return {
       rank,
+      userId: e.userId,
       name: displayName(userInfo.get(e.userId).name),
       points: e.points,
       challenges: e.challenges,
       languages: e.languages,
-      isYou: e.userId === viewer,
     };
   });
 
-  const rows = ranked.slice(0, LEADERBOARD_SIZE);
-  const you = ranked.slice(LEADERBOARD_SIZE).find((row) => row.isYou) || null;
-  return { rows, you, youHidden, ranked: ranked.length };
+  return { ranked, hiddenIds };
 }
 
 // For a challenge page: how many members have solved it, and the first few
 // to do so (earliest passing Submit in any language).
 // Returns { solvers, first: [{ name, language, solvedAt }] }
 export async function getChallengeSolvers(challengeId, count = 5) {
+  return cached(`solvers:${challengeId}:${count}`, BOARD_TTL_MS, () => loadChallengeSolvers(challengeId, count));
+}
+
+async function loadChallengeSolvers(challengeId, count) {
   return withDb(async (db) => {
     const solves = await db
       .collection("solves")
