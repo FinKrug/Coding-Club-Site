@@ -39,9 +39,9 @@ hacking on the gateway itself.
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or
   Docker Engine + Compose on Linux), with a bit of free RAM and disk
-  space — this image bundles a JDK, a Go toolchain, and clangd, so the
-  first build is a few hundred MB to a couple GB depending on what's
-  already cached.
+  space — this image bundles Java 25, a Go toolchain, a minimal Rust
+  toolchain, and clangd, so the first build is a few hundred MB to a
+  couple GB depending on what's already cached.
 
 ## 1. Start it
 
@@ -51,9 +51,9 @@ From this `local-dev-tools` folder:
 docker compose up -d --build
 ```
 
-The first run will take a while: it installs a JDK, Go, clangd, downloads
-rust-analyzer and the Eclipse JDT Language Server. Later runs are much
-faster.
+The first run will take a while: it installs Java 25, Go, a minimal Rust
+toolchain (for rust-analyzer), clangd, and the Eclipse JDT Language Server.
+Later runs are much faster.
 
 Check it's healthy with:
 
@@ -118,6 +118,13 @@ idle-timeout logic) was fixed after an earlier release.
 Check `docker compose logs lsp-gateway`. The most common cause is the
 per-language server itself failing to start inside the container — the
 gateway logs which one and why (e.g. `[python stderr] ...`).
+
+**Java or Rust IntelliSense connects but never suggests anything.** You're
+probably on an old copy of this bundle: older images had Java 17 (the Java
+language server now needs Java 25) and no Rust toolchain (rust-analyzer
+needs `cargo` and the standard library source). Grab a fresh download from
+`/resources` and rebuild with `docker compose up -d --build`. Java is also
+just slow to start: the first suggestions can take 20–30 seconds.
 
 **A specific language's IntelliSense doesn't work but others do.** Each
 language spawns its own process on demand (pyright, clangd,

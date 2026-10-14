@@ -3,18 +3,31 @@
 # working IntelliSense backend for every language the site supports without
 # installing any of those tools on your own machine.
 #
-# This is a big image (a JDK, a Go toolchain, clangd, etc.) and the first
-# build can take several minutes — that's expected.
+# This is a big image (a JDK, a Go toolchain, a Rust toolchain, clangd, etc.)
+# and the first build can take several minutes — that's expected.
+
+# Java 25 comes from the official Eclipse Temurin image. Current Eclipse JDT
+# Language Server builds need Java 25 or newer (on older Java they fail at
+# startup with "LinkageError ... org.eclipse.equinox.launcher.Main"), and
+# Debian, this image's base, doesn't package Java 25.
+FROM eclipse-temurin:25-jdk AS jdk
 
 FROM node:20-bookworm-slim
 
+# libstdc++-12-dev brings the C and C++ standard library headers. clangd
+# needs them to resolve #include <string>, <vector>, <stdio.h>, ...; without
+# them C/C++ IntelliSense connects but has nothing to suggest.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       curl \
       ca-certificates \
       clangd \
-      openjdk-17-jdk \
+      libstdc++-12-dev \
       python3 \
     && rm -rf /var/lib/apt/lists/*
+
+ENV JAVA_HOME=/opt/java/openjdk
+COPY --from=jdk /opt/java/openjdk ${JAVA_HOME}
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 # Python IntelliSense: pyright is an npm package (TypeScript, runs on Node),
 # it doesn't need a Python toolchain of its own — python3 above just lets it
@@ -34,11 +47,16 @@ ENV GOPATH=/root/go
 ENV PATH="${GOPATH}/bin:${PATH}"
 RUN go install golang.org/x/tools/gopls@latest
 
-# Rust IntelliSense: rust-analyzer's prebuilt binary. No cargo/rustc needed.
-RUN curl -fsSL \
-      https://github.com/rust-lang/rust-analyzer/releases/latest/download/rust-analyzer-x86_64-unknown-linux-gnu.gz \
-      | gunzip -c > /usr/local/bin/rust-analyzer \
-    && chmod +x /usr/local/bin/rust-analyzer
+# Rust IntelliSense: rust-analyzer needs cargo (to load the project the
+# gateway creates) and the standard library's source (for completions on
+# Vec, String, ...). Without them it connects but suggests nothing, so this
+# installs a minimal Rust toolchain through rustup instead of just the
+# rust-analyzer binary. rustup also picks the right build for Intel or ARM.
+ENV RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo
+ENV PATH="${CARGO_HOME}/bin:${PATH}"
+RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --profile minimal --no-modify-path \
+    && rustup component add rust-src rust-analyzer
 
 # Java IntelliSense: Eclipse JDT Language Server. lsp-gateway/server.js looks
 # for it via JDTLS_HOME (plugins/ + config_linux/ inside that directory).

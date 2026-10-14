@@ -48,8 +48,11 @@ const LANGUAGE_CONFIG = {
     command: "rust-analyzer",
     args: [],
     fileName: "main.rs",
+    // A library crate, not a binary: challenge code usually has no main(),
+    // and a binary crate would flag "`main` function not found" on every
+    // Rust challenge. A file that does have main() is still fine in a lib.
     projectFiles: {
-      "Cargo.toml": '[package]\nname = "main"\nversion = "0.1.0"\nedition = "2021"\n\n[[bin]]\nname = "main"\npath = "main.rs"\n'
+      "Cargo.toml": '[package]\nname = "main"\nversion = "0.1.0"\nedition = "2021"\n\n[lib]\npath = "main.rs"\n'
     }
   },
   go: {
@@ -78,6 +81,10 @@ function buildJavaArgs(workspaceDataDir) {
     throw new Error(`Could not find equinox launcher jar in ${pluginsDir}`);
   }
 
+  // jdtls ships a separate config folder for ARM machines (e.g. Apple
+  // Silicon Macs running the Docker image).
+  const configDir = process.arch === "arm64" ? "config_linux_arm" : "config_linux";
+
   return [
     "-Declipse.application=org.eclipse.jdt.ls.core.id1",
     "-Dosgi.bundles.defaultStartLevel=4",
@@ -88,7 +95,7 @@ function buildJavaArgs(workspaceDataDir) {
     "-jar",
     path.join(pluginsDir, launcherJar),
     "-configuration",
-    path.join(jdtlsHome, "config_linux"),
+    path.join(jdtlsHome, configDir),
     "-data",
     workspaceDataDir
   ];
