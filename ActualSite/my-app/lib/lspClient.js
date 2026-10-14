@@ -97,6 +97,7 @@ export function connectLanguageServer({ monaco, model, lang, onStatusChange, gat
   const documentUri = `inmemory://model/${lang}`;
   let documentVersion = 1;
   let reconnectTimer = null;
+  let reconnectDelay = 3000; // grows while the gateway is down or busy, up to 30s
 
   function send(method, params) {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
@@ -176,6 +177,7 @@ export function connectLanguageServer({ monaco, model, lang, onStatusChange, gat
             text: model.getValue()
           }
         });
+        reconnectDelay = 3000;
         onStatusChange?.("connected");
       } catch (err) {
         console.error("LSP initialize failed:", err);
@@ -186,9 +188,14 @@ export function connectLanguageServer({ monaco, model, lang, onStatusChange, gat
     ws.addEventListener("message", handleMessage);
 
     ws.addEventListener("close", () => {
+      // Requests still waiting on this connection will never get an answer:
+      // fail them now so Monaco doesn't sit on "Loading..." forever.
+      for (const { reject } of pending.values()) reject(new Error("Disconnected"));
+      pending.clear();
       if (disposed) return;
       onStatusChange?.("disconnected");
-      reconnectTimer = setTimeout(connect, 3000);
+      reconnectTimer = setTimeout(connect, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, 30000);
     });
 
     ws.addEventListener("error", () => {

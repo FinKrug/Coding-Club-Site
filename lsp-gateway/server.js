@@ -13,9 +13,16 @@ const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
 
+const { pathToFileURL } = require("url");
+
 const PORT = process.env.LSP_GATEWAY_PORT || 3001;
 const MAX_CONCURRENT_SESSIONS = parseInt(process.env.LSP_MAX_SESSIONS || "6", 10);
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes of inactivity kills the session
+// Cloudflare (in front of lsp.neumontcoding.club) drops a WebSocket that's
+// been silent for ~100 seconds, e.g. while someone reads the problem
+// without typing. A ping every 30 seconds keeps it open, and a client that
+// stops answering pings gets its session freed instead of holding a slot.
+const HEARTBEAT_MS = 30 * 1000;
 
 let activeSessions = 0;
 
@@ -28,22 +35,28 @@ const LANGUAGE_CONFIG = {
   c: {
     command: "clangd",
     args: [],
-    fileName: "main.c"
+    fileName: "main.c",
+    projectFiles: { "compile_flags.txt": "-std=c17\n" }
   },
   cpp: {
     command: "clangd",
     args: [],
-    fileName: "main.cpp"
+    fileName: "main.cpp",
+    projectFiles: { "compile_flags.txt": "-std=c++17\n-xc++\n" }
   },
   rust: {
     command: "rust-analyzer",
     args: [],
-    fileName: "main.rs"
+    fileName: "main.rs",
+    projectFiles: {
+      "Cargo.toml": '[package]\nname = "main"\nversion = "0.1.0"\nedition = "2021"\n\n[[bin]]\nname = "main"\npath = "main.rs"\n'
+    }
   },
   go: {
     command: "gopls",
     args: ["serve"],
-    fileName: "main.go"
+    fileName: "main.go",
+    projectFiles: { "go.mod": "module main\n\ngo 1.21\n" }
   },
   java: {
     command: "java",
@@ -87,6 +100,9 @@ function createWorkspace(lang) {
   const workspaceDir = path.join(os.tmpdir(), "lsp-sessions", sessionId);
   fs.mkdirSync(workspaceDir, { recursive: true });
   fs.writeFileSync(path.join(workspaceDir, config.fileName), "");
+  for (const [name, contents] of Object.entries(config.projectFiles || {})) {
+    fs.writeFileSync(path.join(workspaceDir, name), contents);
+  }
   return workspaceDir;
 }
 
@@ -224,9 +240,71 @@ wss.on("connection", (ws, req) => {
 
   idleTimer = resetIdleTimer();
 
+  // The browser names its document something like "inmemory://model/rust",
+  // but clangd, rust-analyzer and gopls only accept real file:// paths and
+  // reject anything else ("url is not a file"). So the gateway swaps the
+  // browser's name for the session's real file on the way in, and back on
+  // the way out. Pyright and jdtls are fine either way.
+  const workspaceUri = pathToFileURL(workspaceDir).href;
+  const fileUri = pathToFileURL(path.join(workspaceDir, LANGUAGE_CONFIG[lang].fileName)).href;
+  let clientUri = null; // learned from the browser's textDocument/didOpen
+
+  function toServer(jsonString) {
+    let message;
+    try {
+      message = JSON.parse(jsonString);
+    } catch {
+      return jsonString;
+    }
+    if (message.method === "initialize" && message.params) {
+      // Without a workspace, rust-analyzer and gopls never load the project.
+      message.params.rootUri = workspaceUri;
+      message.params.rootPath = workspaceDir;
+      message.params.workspaceFolders = [{ uri: workspaceUri, name: "main" }];
+      return JSON.stringify(message);
+    }
+    if (message.method === "textDocument/didOpen" && !clientUri) {
+      clientUri = message.params?.textDocument?.uri || null;
+    }
+    return clientUri ? jsonString.split(JSON.stringify(clientUri)).join(JSON.stringify(fileUri)) : jsonString;
+  }
+
+  function toBrowser(jsonString) {
+    return clientUri ? jsonString.split(JSON.stringify(fileUri)).join(JSON.stringify(clientUri)) : jsonString;
+  }
+
+  // Sends a message to the language server, unless it has already exited.
+  // Writing to a dead process raises EPIPE, and an unhandled EPIPE crashes
+  // the whole gateway, dropping every language for everyone at once.
+  function writeToServer(jsonString) {
+    if (child.exitCode !== null || child.signalCode !== null || !child.stdin.writable) return;
+    child.stdin.write(frameMessage(jsonString));
+  }
+
+  child.stdin.on("error", (err) => {
+    console.error(`Language server stdin error for ${lang} (${err.code}):`, err.message);
+  });
+
   const feedStdout = createStdioParser((jsonString) => {
+    let message = null;
+    try {
+      message = JSON.parse(jsonString);
+    } catch {
+      // not JSON: just pass it along
+    }
+    // The language server is asking the editor something (settings, progress
+    // bars, registering features...). The browser client never answers
+    // these, and rust-analyzer/gopls can stall waiting, so answer here.
+    if (message && message.method && message.id !== undefined) {
+      const result =
+        message.method === "workspace/configuration"
+          ? (message.params?.items || []).map(() => null)
+          : null;
+      writeToServer(JSON.stringify({ jsonrpc: "2.0", id: message.id, result }));
+      return;
+    }
     if (ws.readyState === ws.OPEN) {
-      ws.send(jsonString);
+      ws.send(toBrowser(jsonString));
     }
   });
 
@@ -244,6 +322,11 @@ wss.on("connection", (ws, req) => {
   // itself returns immediately and reports a failure to actually start the
   // process asynchronously via this event instead.
   child.on("error", (err) => {
+    if (err.code === "ENOENT") {
+      console.error(
+        `Language server for ${lang} not found: is "${LANGUAGE_CONFIG[lang].command}" installed and on the gateway's PATH?`
+      );
+    }
     console.error(`Language server process error for ${lang}:`, err);
     if (ws.readyState === ws.OPEN) {
       ws.close(1011, "Language server process error.");
@@ -257,10 +340,14 @@ wss.on("connection", (ws, req) => {
     }
   });
 
+  ws.isAlive = true;
+  ws.on("pong", () => {
+    ws.isAlive = true;
+  });
+
   ws.on("message", (data) => {
     idleTimer = resetIdleTimer();
-    const jsonString = data.toString("utf-8");
-    child.stdin.write(frameMessage(jsonString));
+    writeToServer(toServer(data.toString("utf-8")));
   });
 
   ws.on("close", () => {
@@ -278,6 +365,18 @@ wss.on("connection", (ws, req) => {
     console.error(`WebSocket error for ${lang} session:`, err);
   });
 });
+
+const heartbeat = setInterval(() => {
+  for (const client of wss.clients) {
+    if (client.isAlive === false) {
+      client.terminate(); // no pong since the last ping: the browser is gone
+      continue;
+    }
+    client.isAlive = false;
+    client.ping();
+  }
+}, HEARTBEAT_MS);
+wss.on("close", () => clearInterval(heartbeat));
 
 server.listen(PORT, () => {
   console.log(`LSP gateway listening on port ${PORT}`);
