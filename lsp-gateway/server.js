@@ -111,7 +111,10 @@ function spawnServer(lang, workspaceDir) {
 
   let args;
   if (lang === "java") {
-    const dataDir = path.join(workspaceDir, ".jdt-data");
+    // jdtls's own data folder must live OUTSIDE the project folder: inside
+    // it, jdtls can't create its project and treats Main.java as a loose
+    // file ("only syntax errors are reported"). cleanupWorkspace() removes it.
+    const dataDir = `${workspaceDir}-jdt`;
     fs.mkdirSync(dataDir, { recursive: true });
     args = buildJavaArgs(dataDir);
   } else {
@@ -165,9 +168,11 @@ function createStdioParser(onMessage) {
 }
 
 function cleanupWorkspace(workspaceDir) {
-  fs.rm(workspaceDir, { recursive: true, force: true }, (err) => {
-    if (err) console.error("Failed to clean up workspace:", err);
-  });
+  for (const dir of [workspaceDir, `${workspaceDir}-jdt`]) {
+    fs.rm(dir, { recursive: true, force: true }, (err) => {
+      if (err) console.error("Failed to clean up workspace:", err);
+    });
+  }
 }
 
 const server = http.createServer((req, res) => {
