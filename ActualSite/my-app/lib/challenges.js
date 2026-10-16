@@ -87,7 +87,31 @@ function testInfo(doc) {
 }
 
 // `published: false` hides a challenge while you're still writing it.
-const VISIBLE = { published: { $ne: false } };
+// `releaseDate: "YYYY-MM-DD"` hides it until that day starts in Utah time,
+// so challenges can be added ahead of time and appear on their own. (With
+// the 5-minute cache above, a release can take up to 5 minutes to show.)
+const CLUB_TIME_ZONE = "America/Denver"; // Neumont is in Utah
+
+function todayInUtah() {
+  // en-CA formats dates as YYYY-MM-DD, which compares correctly as text.
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: CLUB_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function visibleNow() {
+  return {
+    published: { $ne: false },
+    $or: [
+      { releaseDate: { $exists: false } },
+      { releaseDate: null },
+      { releaseDate: { $lte: todayInUtah() } },
+    ],
+  };
+}
 
 function parseId(id) {
   const numericId = Number(id);
@@ -102,7 +126,7 @@ async function loadChallengeList() {
   const docs = await withDb((db) =>
     db
       .collection("challenges")
-      .find(VISIBLE, { projection: LIST_FIELDS })
+      .find(visibleNow(), { projection: LIST_FIELDS })
       .sort({ id: 1 })
       .toArray()
   );
@@ -117,7 +141,7 @@ export async function getChallenge(id) {
 
 async function loadChallenge(numericId) {
   const doc = await withDb((db) =>
-    db.collection("challenges").findOne({ id: numericId, ...VISIBLE }, { projection: PAGE_FIELDS })
+    db.collection("challenges").findOne({ id: numericId, ...visibleNow() }, { projection: PAGE_FIELDS })
   );
   return doc ? { ...normalize(doc), tests: testInfo(doc) } : null;
 }
@@ -133,7 +157,7 @@ export async function getChallengeForGrading(id) {
 async function loadChallengeForGrading(numericId) {
   const doc = await withDb((db) =>
     db.collection("challenges").findOne(
-      { id: numericId, ...VISIBLE },
+      { id: numericId, ...visibleNow() },
       { projection: { _id: 0, id: 1, title: 1, points: 1, function: 1, tests: 1, timeLimitSeconds: 1 } }
     )
   );

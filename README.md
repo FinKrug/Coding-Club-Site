@@ -287,6 +287,7 @@ npm run db:seed    # copies the starter challenges in data/challenges.json into 
 | `points` | no | Base points for solving it (defaults to 10). Worth more in languages not taught in class; see **Points**. |
 | `timeLimitSeconds` | no | How long the whole test run may take, 1 to 10 seconds (defaults to 2). Raise it for challenges with big stress tests. |
 | `published` | no | `false` hides it while you're still writing it. |
+| `releaseDate` | no | The day it appears on the site, like `"2026-10-19"`. It shows up at midnight Utah time that day, so you can add a few weeks of challenges ahead of time. Leave it out to show the challenge right away. |
 | `examples` | no | Hand-written `{ "input": "...", "output": "..." }` examples. If you leave this out, the page shows the visible tests as examples instead. |
 
 If Atlas says **"Document failed validation"**, a field is missing or has the wrong type (for example `"difficulty": "easy"` in lowercase), and the error says which. A duplicate `id` fails with **"duplicate key"**.

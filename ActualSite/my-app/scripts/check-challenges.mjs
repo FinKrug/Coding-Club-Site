@@ -24,13 +24,13 @@ try {
   const challenges = await client
     .db(process.env.MONGODB_DB || "coding-club")
     .collection("challenges")
-    .find({}, { projection: { _id: 0, id: 1, title: 1, published: 1, function: 1, tests: 1 } })
+    .find({}, { projection: { _id: 0, id: 1, title: 1, published: 1, releaseDate: 1, function: 1, tests: 1 } })
     .sort({ id: 1 })
     .toArray();
 
   let broken = 0;
   for (const challenge of challenges) {
-    const label = `#${challenge.id} ${challenge.title}${challenge.published === false ? " (unpublished)" : ""}`;
+    const label = `#${challenge.id} ${challenge.title}${challenge.published === false ? " (unpublished)" : ""}${challenge.releaseDate ? ` (appears ${challenge.releaseDate})` : ""}`;
     if (!challenge.function) {
       console.log(`-  ${label}: no tests yet (Run Code just runs the program).`);
       continue;

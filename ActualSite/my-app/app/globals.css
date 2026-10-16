@@ -2143,13 +2143,13 @@ section.info-block code,
   gap: 1.4rem;
 }
 
-.fair-steps li {
+.fair-steps > ol > li {
   counter-increment: fair-step;
   position: relative;
   padding-left: 2.6rem;
 }
 
-.fair-steps li::before {
+.fair-steps > ol > li::before {
   content: counter(fair-step);
   position: absolute;
   left: 0;
@@ -2166,7 +2166,7 @@ section.info-block code,
   justify-content: center;
 }
 
-.fair-steps li:last-child::before {
+.fair-steps > ol > li.star::before {
   content: "★";
   background: var(--color-accent-soft);
   color: var(--color-accent);
@@ -2277,6 +2277,147 @@ section.info-block code,
 
 .fair-join .fair-meeting {
   margin-top: 0.8rem;
+}
+
+/* Finished steps turn green with a checkmark. */
+.fair-steps > ol > li.done::before {
+  content: "✓";
+  background: var(--color-success);
+  color: #0d0d0d;
+}
+
+.fair-steps > ol > li > p + p {
+  margin-top: 0.5rem;
+}
+
+.fair-langs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.fair-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated-2);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.fair-lang:hover {
+  border-color: var(--color-accent);
+}
+
+.fair-lang.active {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.fair-lang-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.fair-lang.active .fair-lang-tag {
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--color-on-accent);
+}
+
+.fair-copyline pre {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-x: auto;
+  color: var(--color-accent);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9rem;
+}
+
+.fair-notes {
+  margin: 0.6rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--color-text-muted);
+  font-size: 0.92rem;
+}
+
+.fair-notes li + li {
+  margin-top: 0.3rem;
+}
+
+.fair-coach {
+  display: flex;
+  gap: 0.7rem;
+  align-items: baseline;
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated-2);
+  font-size: 0.92rem;
+}
+
+.fair-coach.tip {
+  border-color: var(--color-warning);
+  background: var(--color-warning-soft);
+}
+
+.fair-coach.good {
+  border-color: var(--color-success);
+  background: var(--color-success-soft);
+}
+
+.fair-coach-label {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.fair-coach.tip .fair-coach-label {
+  color: var(--color-warning);
+}
+
+.fair-coach.good .fair-coach-label {
+  color: var(--color-success);
+}
+
+.fair-coach code {
+  background: var(--color-bg-elevated-2);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.85em;
+}
+
+.fair-answer {
+  position: relative;
+}
+
+.fair-answer .btn-ghost {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.3rem 0.8rem;
+  background: #111;
 }
 
 /* The fair page's editor sits in its own grid, not .problem-layout. */
