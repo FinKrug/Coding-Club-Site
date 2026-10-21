@@ -1,5 +1,7 @@
 import { withDb } from "@/lib/mongodb";
 import { cached } from "@/lib/cache";
+import { isReleased, releaseDateFor } from "@/lib/challengeSchedule";
+import { clubToday } from "@/lib/clubTime";
 import {
   LANGUAGES,
   formatCall,
@@ -18,6 +20,11 @@ import {
 //
 // Hidden tests never leave this file: getChallenge() only returns the
 // visible ones, and grading (which needs all of them) happens on the server.
+//
+// Each week's challenges unlock on their own Monday (lib/challengeSchedule.js).
+// Until then they're treated as if they don't exist: not listed, their page
+// is a 404, and they can't be run or submitted. The check happens after the
+// cache, so a week appears right at midnight, not up to 5 minutes later.
 
 const LIST_FIELDS = {
   _id: 0,
@@ -95,7 +102,26 @@ function parseId(id) {
 }
 
 export async function listChallenges() {
-  return cached("challenges:list", CHALLENGE_TTL_MS, loadChallengeList);
+  const all = await cached("challenges:list", CHALLENGE_TTL_MS, loadChallengeList);
+  const today = clubToday();
+  return all.filter((challenge) => isReleased(challenge.week, today));
+}
+
+// The next week that still has locked challenges, e.g.
+// { week: "Week 3", date: "2026-10-19", count: 3 }, or null if none.
+export async function getNextRelease() {
+  const all = await cached("challenges:list", CHALLENGE_TTL_MS, loadChallengeList);
+  const today = clubToday();
+  const upcoming = new Map();
+  for (const challenge of all) {
+    if (isReleased(challenge.week, today)) continue;
+    const date = releaseDateFor(challenge.week);
+    const entry = upcoming.get(date) || { week: challenge.week, date, count: 0 };
+    entry.count += 1;
+    upcoming.set(date, entry);
+  }
+  const [first] = [...upcoming.values()].sort((a, b) => (a.date < b.date ? -1 : 1));
+  return first || null;
 }
 
 async function loadChallengeList() {
@@ -112,7 +138,8 @@ async function loadChallengeList() {
 export async function getChallenge(id) {
   const numericId = parseId(id);
   if (!numericId) return null;
-  return cached(`challenges:page:${numericId}`, CHALLENGE_TTL_MS, () => loadChallenge(numericId));
+  const challenge = await cached(`challenges:page:${numericId}`, CHALLENGE_TTL_MS, () => loadChallenge(numericId));
+  return challenge && isReleased(challenge.week) ? challenge : null;
 }
 
 async function loadChallenge(numericId) {
@@ -127,14 +154,17 @@ async function loadChallenge(numericId) {
 export async function getChallengeForGrading(id) {
   const numericId = parseId(id);
   if (!numericId) return null;
-  return cached(`challenges:grading:${numericId}`, CHALLENGE_TTL_MS, () => loadChallengeForGrading(numericId));
+  const challenge = await cached(`challenges:grading:${numericId}`, CHALLENGE_TTL_MS, () =>
+    loadChallengeForGrading(numericId)
+  );
+  return challenge && isReleased(challenge.week) ? challenge : null;
 }
 
 async function loadChallengeForGrading(numericId) {
   const doc = await withDb((db) =>
     db.collection("challenges").findOne(
       { id: numericId, ...VISIBLE },
-      { projection: { _id: 0, id: 1, title: 1, points: 1, function: 1, tests: 1, timeLimitSeconds: 1 } }
+      { projection: { _id: 0, id: 1, title: 1, week: 1, points: 1, function: 1, tests: 1, timeLimitSeconds: 1 } }
     )
   );
   return doc || null;

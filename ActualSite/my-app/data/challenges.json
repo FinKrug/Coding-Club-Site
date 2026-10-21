@@ -343,5 +343,218 @@
       {"args": [[1], 10000], "expected": 10000, "hidden": true},
       {"args": [[4, 6], 7], "expected": -1, "hidden": true}
     ]
+  },
+  {
+    "id": 15,
+    "title": "Split the Bill",
+    "difficulty": "Easy",
+    "week": "Week 3",
+    "points": 10,
+    "published": true,
+    "description": "A bill-splitting app asks `Enter the bill and the number of people:` and the user types `57.80 4`. Everything typed into the console arrives as **text**, so the app gets the string `\"57.80 4\"`, not numbers.\n\nTurn that line into numbers and return how many **whole dollars** each person pays, dropping the cents. `splitBill(\"57.80 4\")` returns `14`, because 57.80 ÷ 4 = 14.45.\n\n**Parse** the two parts: the bill is a decimal (`float()` in Python, `Double.parseDouble` in Java, `double.Parse` in C#) and the number of people is a whole number (`int()`, `Integer.parseInt`, `int.Parse`). Then divide, and **cast** the answer to an `int` to drop everything after the decimal point: `(int)` in Java and C#, `int()` in Python.\n\nPeople type messy input: there may be extra spaces before or after the line, so trim it before you split it. The two values are separated by one space. The bill is between 0 and 10,000, and there are 1 to 100 people.",
+    "function": {
+      "name": "splitBill",
+      "params": [
+        {
+          "name": "line",
+          "type": "string"
+        }
+      ],
+      "returns": "int"
+    },
+    "tests": [
+      {
+        "args": [
+          "57.80 4"
+        ],
+        "expected": 14
+      },
+      {
+        "args": [
+          "100 3"
+        ],
+        "expected": 33
+      },
+      {
+        "args": [
+          "  45.00 4  "
+        ],
+        "expected": 11
+      },
+      {
+        "args": [
+          "9.99 1"
+        ],
+        "expected": 9,
+        "hidden": true
+      },
+      {
+        "args": [
+          "0 5"
+        ],
+        "expected": 0,
+        "hidden": true
+      },
+      {
+        "args": [
+          "120 4"
+        ],
+        "expected": 30,
+        "hidden": true
+      },
+      {
+        "args": [
+          "1000.01 1000"
+        ],
+        "expected": 1,
+        "hidden": true
+      },
+      {
+        "args": [
+          "0.99 2"
+        ],
+        "expected": 0,
+        "hidden": true
+      },
+      {
+        "args": [
+          "8000 7"
+        ],
+        "expected": 1142,
+        "hidden": true
+      },
+      {
+        "args": [
+          "7.5 2"
+        ],
+        "expected": 3,
+        "hidden": true
+      },
+      {
+        "args": [
+          "10000 100"
+        ],
+        "expected": 100,
+        "hidden": true
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "title": "Roll for Attack",
+    "difficulty": "Easy",
+    "week": "Week 4",
+    "points": 10,
+    "published": true,
+    "description": "Games use random numbers to roll dice. Most languages give you a random decimal `r` from 0 up to (but not including) 1: `random.random()` in Python, `Math.random()` in Java, `new Random().NextDouble()` in C#. To turn it into a roll of a 20-sided die, multiply by 20, **cast** to an `int` to drop the decimal part, and add 1. `(int)(r * 20) + 1` is always a whole number from 1 to 20.\n\nThen use **conditionals** to decide what happens, checking in this order: a roll of 20 is `Critical!`, a roll of 1 is `Fumble!`, a roll of at least `armorClass` is a `Hit`, and anything else is a `Miss`. A comparison like `roll >= armorClass` is a **boolean**: it's either true or false.\n\n`rollAttack(0.5, 10)` returns `Hit`: 0.5 × 20 = 10, plus 1 is 11, and 11 is at least 10.\n\nThe order matters: a 20 is always `Critical!`, even if `armorClass` is higher than 20, and a 1 is always `Fumble!`, even if `armorClass` is 1. In a real game you'd call the random generator yourself; here `r` is passed in so the tests can check your answer. `r` is at least 0 and less than 1, and `armorClass` is between 1 and 30.",
+    "function": {
+      "name": "rollAttack",
+      "params": [
+        {
+          "name": "r",
+          "type": "double"
+        },
+        {
+          "name": "armorClass",
+          "type": "int"
+        }
+      ],
+      "returns": "string"
+    },
+    "tests": [
+      {
+        "args": [
+          0.5,
+          10
+        ],
+        "expected": "Hit"
+      },
+      {
+        "args": [
+          0.3,
+          15
+        ],
+        "expected": "Miss"
+      },
+      {
+        "args": [
+          0.97,
+          10
+        ],
+        "expected": "Critical!"
+      },
+      {
+        "args": [
+          0.0,
+          5
+        ],
+        "expected": "Fumble!",
+        "hidden": true
+      },
+      {
+        "args": [
+          0.999,
+          25
+        ],
+        "expected": "Critical!",
+        "hidden": true
+      },
+      {
+        "args": [
+          0.04,
+          1
+        ],
+        "expected": "Fumble!",
+        "hidden": true
+      },
+      {
+        "args": [
+          0.45,
+          10
+        ],
+        "expected": "Hit",
+        "hidden": true
+      },
+      {
+        "args": [
+          0.45,
+          11
+        ],
+        "expected": "Miss",
+        "hidden": true
+      },
+      {
+        "args": [
+          0.9,
+          20
+        ],
+        "expected": "Miss",
+        "hidden": true
+      },
+      {
+        "args": [
+          0.6,
+          13
+        ],
+        "expected": "Hit",
+        "hidden": true
+      },
+      {
+        "args": [
+          0.95,
+          1
+        ],
+        "expected": "Critical!",
+        "hidden": true
+      },
+      {
+        "args": [
+          0.05,
+          2
+        ],
+        "expected": "Hit",
+        "hidden": true
+      }
+    ]
   }
 ]

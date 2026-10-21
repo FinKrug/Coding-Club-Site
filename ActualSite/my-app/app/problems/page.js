@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { listChallenges } from "@/lib/challenges";
+import { getNextRelease, listChallenges } from "@/lib/challenges";
+import { formatMeetingDate } from "@/lib/meetings";
 import { getSession } from "@/lib/session";
 import { getSolvedLanguages } from "@/lib/points";
 
@@ -40,6 +41,14 @@ export default async function Problems() {
 
   const weeks = groupByWeek(problems);
 
+  // "Week 3 unlocks Monday, Oct 19" teaser for the next locked week.
+  let nextRelease = null;
+  try {
+    nextRelease = await getNextRelease();
+  } catch (error) {
+    console.error("Failed to load the release schedule:", error);
+  }
+
   // Signed-in members see a checkmark on challenges they've solved.
   let solved = new Map();
   const session = await getSession();
@@ -56,6 +65,14 @@ export default async function Problems() {
       <h1>Weekly Challenges</h1>
 
       {weeks.length === 0 && <p>No challenges yet. Check back soon!</p>}
+
+      {nextRelease && (
+        <p className="next-release">
+          <strong>{nextRelease.week}</strong> unlocks{" "}
+          {formatMeetingDate(nextRelease.date)} ({nextRelease.count} new{" "}
+          {nextRelease.count === 1 ? "challenge" : "challenges"}). New challenges drop every Monday.
+        </p>
+      )}
 
       {weeks.map((week, index) => (
         <div key={index} className="week-card">

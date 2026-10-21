@@ -1,4 +1,5 @@
 import Link from "next/link";
+import NextMeeting from "@/components/NextMeeting";
 
 export default function Home() {
   return (
@@ -44,11 +45,7 @@ export default function Home() {
 
       <section className="info-block">
         <h2>Upcoming Events</h2>
-        <ul>
-          <li>Weekly Coding Challenge</li>
-          <li>Game Development Night</li>
-          <li>Hackathon Preparation Workshop</li>
-        </ul>
+        <NextMeeting />
       </section>
     </div>
   );

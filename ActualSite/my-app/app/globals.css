@@ -483,12 +483,135 @@ section.info-block li {
   margin-bottom: 0.4rem;
 }
 
+/* Upcoming Events on the home page (components/NextMeeting.js) */
+section.info-block .event-name {
+  display: block;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+section.info-block .event-when {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--color-text-faint);
+}
+
+.next-meeting-callout {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 0.15rem 1rem;
+  margin-top: 1rem;
+  padding: 0.9rem 1.1rem;
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+}
+
+.next-meeting-label {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.next-meeting-date {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--color-text);
+}
+
+.next-meeting-countdown {
+  font-weight: 700;
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+.next-meeting-count {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.next-meeting-callout.is-today .next-meeting-countdown {
+  padding: 0.1rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.next-meeting-callout.is-done {
+  display: block;
+  color: var(--color-text-muted);
+  background: var(--color-bg-elevated-2);
+  border-color: var(--color-border);
+}
+
+.next-meeting-toggle {
+  margin-top: 0.85rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.next-meeting-toggle:hover {
+  text-decoration: underline;
+}
+
+section.info-block ol.meeting-dates {
+  margin: 0.6rem 0 0;
+  padding-left: 1.4rem;
+  color: var(--color-text-muted);
+}
+
+section.info-block ol.meeting-dates li {
+  margin-bottom: 0.25rem;
+}
+
+section.info-block ol.meeting-dates li.is-past {
+  color: var(--color-text-faint);
+  text-decoration: line-through;
+}
+
+section.info-block ol.meeting-dates li.is-next {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.meeting-dates-tag {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
 section.info-block p {
   color: var(--color-text-muted);
   margin: 0;
 }
 
 /* ---------- Problems list ---------- */
+
+.next-release {
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-accent-soft);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+}
+
+.next-release strong {
+  color: var(--color-text);
+}
 
 .container > h1 {
   text-transform: uppercase;

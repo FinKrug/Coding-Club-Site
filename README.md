@@ -283,13 +283,25 @@ npm run db:seed    # copies the starter challenges in data/challenges.json into 
 | `description` | yes | The problem statement. `\n\n` starts a new paragraph; `` `code` `` and `**bold**` work. |
 | `function` | for tests | The function members write: its `name`, `params` (each with a `name` and `type`) and `returns` type. See below. |
 | `tests` | for tests | The test cases. See below. |
-| `week` | no | Groups challenges on the list page, e.g. `"Week 2"` (defaults to Week 1). |
+| `week` | no | Groups challenges on the list page, e.g. `"Week 2"` (defaults to Week 1). A `"Week N"` challenge stays hidden until that week's Monday; see **Weekly release** below. |
 | `points` | no | Base points for solving it (defaults to 10). Worth more in languages not taught in class; see **Points**. |
 | `timeLimitSeconds` | no | How long the whole test run may take, 1 to 10 seconds (defaults to 2). Raise it for challenges with big stress tests. |
 | `published` | no | `false` hides it while you're still writing it. |
 | `examples` | no | Hand-written `{ "input": "...", "output": "..." }` examples. If you leave this out, the page shows the visible tests as examples instead. |
 
 If Atlas says **"Document failed validation"**, a field is missing or has the wrong type (for example `"difficulty": "easy"` in lowercase), and the error says which. A duplicate `id` fails with **"duplicate key"**.
+
+## Weekly release
+
+New challenges unlock every Monday, automatically. A challenge with `"week": "Week 3"` stays hidden (not listed, its page is a 404, and it can't be run or submitted) until midnight Utah time on Week 3's Monday, then appears on its own. You can add a whole week's challenges ahead of time and forget about them.
+
+The Mondays are counted from one setting in `ActualSite/my-app/data/challengeSchedule.js`:
+
+```js
+week1Start: "2026-10-05",   // Week 1 = Oct 5, Week 2 = Oct 12, Week 3 = Oct 19, ...
+```
+
+At the start of each quarter, set it to the Monday Week 1 opens and redeploy. Challenges with any other week label (like `"Club Fair"`) are always visible, and `"published": false` still hides a single challenge no matter the date. The challenges page shows a "Week N unlocks Monday, ..." note for the next locked week.
 
 ## Writing tests
 
