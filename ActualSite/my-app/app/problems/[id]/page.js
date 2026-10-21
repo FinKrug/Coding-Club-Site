@@ -180,7 +180,7 @@ export default async function ProblemPage({ params }) {
         usedLanguages={usedLanguages}
         basePoints={problem.points}
         signedIn={Boolean(session)}
-        guestCanRun={problem.id === fairInfo.challengeId}
+        guestCanRun={fairInfo.enabled && problem.id === fairInfo.challengeId}
       />
     </div>
   );

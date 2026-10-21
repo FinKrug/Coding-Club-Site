@@ -2,6 +2,7 @@ import { withDb } from "@/lib/mongodb";
 import { cached } from "@/lib/cache";
 import { isChallengeReleased, releaseDateOf } from "@/lib/challengeSchedule";
 import { clubToday } from "@/lib/clubTime";
+import fairInfo from "@/data/fairInfo";
 import {
   LANGUAGES,
   formatCall,
@@ -100,6 +101,13 @@ function testInfo(doc) {
 // whatever its release date.
 const VISIBLE = { published: { $ne: false } };
 
+// Released, and not the club fair challenge while the fair is switched off
+// (data/fairInfo.js). Everything below goes through this.
+function isOnSite(challenge, today = clubToday()) {
+  if (!fairInfo.enabled && challenge.id === fairInfo.challengeId) return false;
+  return isChallengeReleased(challenge, today);
+}
+
 function parseId(id) {
   const numericId = Number(id);
   return Number.isInteger(numericId) && numericId >= 1 ? numericId : null;
@@ -108,7 +116,7 @@ function parseId(id) {
 export async function listChallenges() {
   const all = await cached("challenges:list", CHALLENGE_TTL_MS, loadChallengeList);
   const today = clubToday();
-  return all.filter((challenge) => isChallengeReleased(challenge, today));
+  return all.filter((challenge) => isOnSite(challenge, today));
 }
 
 // The next release day that still has locked challenges, e.g.
@@ -118,7 +126,7 @@ export async function getNextRelease() {
   const today = clubToday();
   const upcoming = new Map();
   for (const challenge of all) {
-    if (isChallengeReleased(challenge, today)) continue;
+    if (isOnSite(challenge, today) || !releaseDateOf(challenge)) continue;
     const date = releaseDateOf(challenge);
     const entry = upcoming.get(date) || { week: challenge.week, date, count: 0 };
     entry.count += 1;
@@ -143,7 +151,7 @@ export async function getChallenge(id) {
   const numericId = parseId(id);
   if (!numericId) return null;
   const challenge = await cached(`challenges:page:${numericId}`, CHALLENGE_TTL_MS, () => loadChallenge(numericId));
-  return challenge && isChallengeReleased(challenge) ? challenge : null;
+  return challenge && isOnSite(challenge) ? challenge : null;
 }
 
 async function loadChallenge(numericId) {
@@ -161,7 +169,7 @@ export async function getChallengeForGrading(id) {
   const challenge = await cached(`challenges:grading:${numericId}`, CHALLENGE_TTL_MS, () =>
     loadChallengeForGrading(numericId)
   );
-  return challenge && isChallengeReleased(challenge) ? challenge : null;
+  return challenge && isOnSite(challenge) ? challenge : null;
 }
 
 async function loadChallengeForGrading(numericId) {

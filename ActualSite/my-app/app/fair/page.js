@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { getChallenge } from "@/lib/challenges";
 import { getSession } from "@/lib/session";
 import { getSolveSummary } from "@/lib/points";
@@ -19,6 +20,9 @@ export const metadata = {
 };
 
 export default async function FairPage() {
+  // The fair is over: hide the page until data/fairInfo.js turns it back on.
+  if (!fairInfo.enabled) notFound();
+
   const session = await getSession();
 
   let challenge = null;
