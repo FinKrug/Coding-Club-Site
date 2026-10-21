@@ -2,12 +2,14 @@ import Link from "next/link";
 import { getChallenge } from "@/lib/challenges";
 import { getSession } from "@/lib/session";
 import { getSolveSummary } from "@/lib/points";
-import FairEditor, { CopyLine } from "@/components/FairEditor";
+import FairChallenge from "@/components/FairChallenge";
 import fairInfo from "@/data/fairInfo";
 
 // The club fair landing page (the QR code at the booth points here).
 // A complete beginner can write and run one line of code without an
-// account. Signed-in members can also Submit it for points.
+// account. Signed-in members can also Submit it for points. The guide,
+// coach and editor are in components/FairChallenge.js; the per-language
+// instructions are in data/fairGuides.js.
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +17,6 @@ export const metadata = {
   title: "Write Your First Program — Neumont Coding Club",
   description: "Two minutes, no experience, nothing to install. Write your first program with the Neumont Coding Club.",
 };
-
-const ANSWER_LINE = 'return "Hello, " + name + "!"';
 
 export default async function FairPage() {
   const session = await getSession();
@@ -68,83 +68,16 @@ export default async function FairPage() {
       </section>
 
       {challenge?.tests.hasTests ? (
-        <div className="fair-layout">
-          <div className="fair-steps">
-            <ol>
-              <li>
-                <h3>Meet the code</h3>
-                <p>
-                  The editor holds a <strong>function</strong> called <code>greet</code>. A function is
-                  a little machine: you hand it something (here, someone&apos;s <code>name</code>) and
-                  it hands something back. Ignore anything above the <code>def</code> line for now.
-                </p>
-              </li>
-              <li>
-                <h3>Type one line</h3>
-                <p>
-                  Delete the word <code>pass</code> and type this in its place. Keep the spaces in
-                  front of it, because Python uses them to know the line belongs to the function.
-                </p>
-                <CopyLine text={ANSWER_LINE} />
-                <p className="fair-note">
-                  Picked a different language? Put the same line between the <code>{"{ }"}</code> and
-                  end it with a <code>;</code>
-                </p>
-              </li>
-              <li>
-                <h3>Press Run Code</h3>
-                <p>
-                  We&apos;ll try your function on a couple of names. Green means it works.
-                </p>
-              </li>
-              <li>
-                <h3>{session ? "Press Submit for points" : "Earn points (optional)"}</h3>
-                <p>
-                  {session
-                    ? "Submit runs a few hidden tests too. Pass them and the points go on your account and the leaderboard."
-                    : "Make a free account (your Neumont email works), then press Submit to earn your first points. Your code stays here while you sign up."}
-                </p>
-              </li>
-              <li>
-                <h3>Bonus: break it on purpose</h3>
-                <p>
-                  Change <code>&quot;Hello, &quot;</code> to <code>&quot;Hey, &quot;</code> and run it
-                  again. The tests fail, because they expect &quot;Hello&quot;. That&apos;s how
-                  programmers find out when something changed by accident.
-                </p>
-              </li>
-            </ol>
-
-            <details className="fair-stuck">
-              <summary>Stuck? See the whole answer</summary>
-              <pre>{`def greet(name: str) -> str:\n    ${ANSWER_LINE}`}</pre>
-              <p>
-                Or wave at someone at the booth
-                {fairInfo.discordUrl && (
-                  <>
-                    {" "}or ask in our{" "}
-                    <a href={fairInfo.discordUrl} target="_blank" rel="noopener noreferrer">
-                      Discord
-                    </a>
-                  </>
-                )}
-                . We&apos;re happy to help.
-              </p>
-            </details>
-          </div>
-
-          <FairEditor
-            signedIn={Boolean(session)}
-            discordUrl={fairInfo.discordUrl}
-            challengeId={challenge.id}
-            hasTests={challenge.tests.hasTests}
-            starters={challenge.tests.starters}
-            supportedLanguages={challenge.tests.languages}
-            solvedLanguages={solvedLanguages}
-            usedLanguages={usedLanguages}
-            basePoints={challenge.points}
-          />
-        </div>
+        <FairChallenge
+          signedIn={Boolean(session)}
+          discordUrl={fairInfo.discordUrl}
+          challengeId={challenge.id}
+          starters={challenge.tests.starters}
+          supportedLanguages={challenge.tests.languages}
+          solvedLanguages={solvedLanguages}
+          usedLanguages={usedLanguages}
+          basePoints={challenge.points}
+        />
       ) : (
         <section className="info-block">
           <h2>The fair challenge isn&apos;t ready yet</h2>

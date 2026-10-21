@@ -40,6 +40,11 @@ const challengeValidator = {
       week: { bsonType: "string", description: 'text such as "Week 3"' },
       points: { bsonType: NUMBER, minimum: 0, description: "base points, 0 or more" },
       published: { bsonType: "bool", description: "true or false (no quotes)" },
+      releaseDate: {
+        bsonType: "string",
+        pattern: "^\\d{4}-\\d{2}-\\d{2}$",
+        description: 'the day it appears on the site (Utah time), written like "2026-10-19"',
+      },
       timeLimitSeconds: {
         bsonType: NUMBER,
         minimum: 1,

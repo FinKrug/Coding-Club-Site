@@ -77,6 +77,9 @@ export default function CodeEditor({
   onGraded = null, // called with { result, points, mode } after Run / Submit
   signedIn = false,
   guestCanRun = false, // true only for the club fair challenge
+  requestedLanguageId = null, // lets a parent switch the language (the fair page's language buttons)
+  onLanguageChange = null, // called with the language id whenever it changes
+  onCodeChange = null, // called with the editor's code whenever it changes
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -119,8 +122,17 @@ export default function CodeEditor({
   useEffect(() => {
     const saved = loadDraft(challengeId, firstLanguage);
     if (saved !== null) setCode(saved);
+    if (onCodeChange) onCodeChange(saved !== null ? saved : starters[firstLanguage] || "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [challengeId]);
+
+  // A parent asked for a different language (e.g. a language button).
+  useEffect(() => {
+    if (!requestedLanguageId || requestedLanguageId === languageId) return;
+    if (!shownLanguages.some((l) => l.id === requestedLanguageId)) return;
+    handleLanguageChange(requestedLanguageId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedLanguageId]);
 
   const currentLanguage = LANGUAGE_LIST.find((l) => l.id === languageId);
 
@@ -157,6 +169,7 @@ export default function CodeEditor({
     const next = value || "";
     setCode(next);
     saveDraft(challengeId, languageId, next);
+    if (onCodeChange) onCodeChange(next);
   }
 
   function clearResults() {
@@ -168,14 +181,18 @@ export default function CodeEditor({
   function handleLanguageChange(nextId) {
     setLanguageId(nextId);
     const saved = loadDraft(challengeId, nextId);
-    setCode(saved !== null ? saved : starters[nextId] || "");
+    const nextCode = saved !== null ? saved : starters[nextId] || "";
+    setCode(nextCode);
     clearResults();
+    if (onLanguageChange) onLanguageChange(nextId);
+    if (onCodeChange) onCodeChange(nextCode);
   }
 
   function handleReset() {
     clearDraft(challengeId, languageId);
     setCode(starters[languageId] || "");
     clearResults();
+    if (onCodeChange) onCodeChange(starters[languageId] || "");
   }
 
   // Challenges without tests: run the program and show what it prints.

@@ -287,6 +287,7 @@ npm run db:seed    # copies the starter challenges in data/challenges.json into 
 | `points` | no | Base points for solving it (defaults to 10). Worth more in languages not taught in class; see **Points**. |
 | `timeLimitSeconds` | no | How long the whole test run may take, 1 to 10 seconds (defaults to 2). Raise it for challenges with big stress tests. |
 | `published` | no | `false` hides it while you're still writing it. |
+| `releaseDate` | no | A specific day for it to appear, like `"2026-10-19"` (midnight Utah time). Overrides the week's Monday; see **Weekly release** below. Usually you can leave it out and let `week` decide. |
 | `examples` | no | Hand-written `{ "input": "...", "output": "..." }` examples. If you leave this out, the page shows the visible tests as examples instead. |
 
 If Atlas says **"Document failed validation"**, a field is missing or has the wrong type (for example `"difficulty": "easy"` in lowercase), and the error says which. A duplicate `id` fails with **"duplicate key"**.
@@ -301,7 +302,9 @@ The Mondays are counted from one setting in `ActualSite/my-app/data/challengeSch
 week1Start: "2026-10-05",   // Week 1 = Oct 5, Week 2 = Oct 12, Week 3 = Oct 19, ...
 ```
 
-At the start of each quarter, set it to the Monday Week 1 opens and redeploy. Challenges with any other week label (like `"Club Fair"`) are always visible, and `"published": false` still hides a single challenge no matter the date. The challenges page shows a "Week N unlocks Monday, ..." note for the next locked week.
+At the start of each quarter, set it to the Monday Week 1 opens and redeploy. Challenges with any other week label (like `"Club Fair"`) are always visible.
+
+To give one challenge its own day instead, add `"releaseDate": "YYYY-MM-DD"` to it; that date wins over its week's Monday. `"published": false` hides a challenge no matter the date. Changes made in Atlas can take up to 5 minutes to show (the challenge cache), but releases themselves happen right at midnight. The challenges page shows a "Week N unlocks Monday, ..." note for the next locked week.
 
 ## Writing tests
 

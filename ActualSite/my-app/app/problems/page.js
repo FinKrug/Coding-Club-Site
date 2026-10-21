@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { getNextRelease, listChallenges } from "@/lib/challenges";
 import { formatMeetingDate } from "@/lib/meetings";
+import { weekNumber } from "@/lib/challengeSchedule";
 import { getSession } from "@/lib/session";
 import { getSolvedLanguages } from "@/lib/points";
 
 export const dynamic = "force-dynamic";
 
+const DIFFICULTY_ORDER = { Easy: 0, Medium: 1, Hard: 2 };
+
 // Groups the flat problems array into the { week, challenges } shape this
-// page renders, in first-seen week order. A problem with no `week` field
-// falls into "Week 1".
+// page renders. Weeks are listed in number order ("Week 1", "Week 2", ...)
+// whatever their challenge ids are, with other labels (e.g. "Club Fair")
+// after them, and each week's challenges go Easy, Medium, Hard. A problem
+// with no `week` field falls into "Week 1".
 function groupByWeek(items) {
   const weeks = [];
   const weekIndex = new Map();
@@ -22,6 +27,13 @@ function groupByWeek(items) {
     weeks[weekIndex.get(label)].challenges.push(problem);
   }
 
+  const order = (label) => weekNumber(label) ?? Number.MAX_SAFE_INTEGER;
+  weeks.sort((a, b) => order(a.week) - order(b.week));
+  for (const week of weeks) {
+    week.challenges.sort(
+      (a, b) => (DIFFICULTY_ORDER[a.difficulty] ?? 3) - (DIFFICULTY_ORDER[b.difficulty] ?? 3) || a.id - b.id
+    );
+  }
   return weeks;
 }
 
