@@ -23,7 +23,27 @@ Members can sign in using **email + password** (student email or personal email 
 
 ---
 
-## 1. Set Up MongoDB Atlas (Free Tier)
+## 1. Local MongoDB with Docker (Quickest for Development)
+
+The repository includes a Docker Compose setup that runs a local MongoDB instance. If `MONGODB_URI` is not set in `.env.local`, the site and database scripts automatically fall back to:
+```bash
+mongodb://127.0.0.1:27017/coding-club
+```
+
+To start local MongoDB (and the local IntelliSense gateway):
+```bash
+docker compose up -d
+```
+
+Then initialize the database:
+```bash
+cd ActualSite/my-app
+npm run db:setup
+```
+
+---
+
+## 2. Set Up MongoDB Atlas (Cloud / Production)
 
 1. Register at [mongodb.com/cloud/atlas/register](https://www.mongodb.com/cloud/atlas/register) and create a **free (M0) cluster**.
 2. **Database Access** → **Add New Database User**:
@@ -47,7 +67,7 @@ Members can sign in using **email + password** (student email or personal email 
 
 ---
 
-## 2. Configure Google Sign-In (OAuth 2.0)
+## 3. Configure Google Sign-In (OAuth 2.0)
 
 1. Navigate to the [Google Cloud Console](https://console.cloud.google.com) and create a new project (e.g., `Neumont Coding Club`).
 2. Go to **Google Auth Platform** (OAuth consent screen):
@@ -68,7 +88,7 @@ Members can sign in using **email + password** (student email or personal email 
 
 ---
 
-## 3. Session & Security Secrets
+## 4. Session & Security Secrets
 
 Generate cryptographic secrets for your session cookie and password hashing pepper:
 
@@ -89,7 +109,7 @@ PASSWORD_PEPPER="your-generated-pepper-secret"
 
 ---
 
-## 4. Email & Password Sign-In (Resend)
+## 5. Email & Password Sign-In (Resend)
 
 Registration sends a 6-digit confirmation code to verify email ownership.
 
@@ -114,7 +134,7 @@ If `RESEND_API_KEY` is not provided, confirmation codes are logged directly to t
 
 ---
 
-## 5. Setting Production Secrets on Cloudflare
+## 6. Setting Production Secrets on Cloudflare
 
 From `ActualSite/my-app`, deploy secrets directly to Cloudflare:
 

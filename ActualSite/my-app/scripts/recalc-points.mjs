@@ -18,10 +18,9 @@ import { MongoClient } from "mongodb";
 import { pointsFor } from "../lib/judge/languageList.mjs";
 import { getAchievement, learnedLanguageKey } from "../lib/achievements.mjs";
 
-const uri = process.env.MONGODB_URI;
-if (!uri) {
-  console.error("MONGODB_URI is not set. Add it to .env.local first (see README).");
-  process.exit(1);
+const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/coding-club";
+if (!process.env.MONGODB_URI) {
+  console.log(`Note: MONGODB_URI not configured. Using local MongoDB at ${uri}`);
 }
 
 const fix = process.argv.includes("--fix");

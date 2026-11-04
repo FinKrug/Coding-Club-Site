@@ -1,0 +1,26 @@
+# Root Docker Compose for local development:
+# - mongodb: Local MongoDB (mongo:7) on localhost:27017 (used automatically unless MONGODB_URI is configured)
+# - lsp-gateway: Language server gateway for local IntelliSense on localhost:3001
+#
+# Usage (from repository root):
+#   docker compose up -d --build
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: coding-club-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+  lsp-gateway:
+    build:
+      context: ./lsp-gateway
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:

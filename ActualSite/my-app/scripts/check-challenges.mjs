@@ -11,10 +11,9 @@
 import { MongoClient } from "mongodb";
 import { validateSpec, LANGUAGES, supportsLanguage } from "../lib/judge/index.mjs";
 
-const uri = process.env.MONGODB_URI;
-if (!uri) {
-  console.error("MONGODB_URI is not set. Add it to .env.local first (see README).");
-  process.exit(1);
+const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/coding-club";
+if (!process.env.MONGODB_URI) {
+  console.log(`Note: MONGODB_URI not configured. Using local MongoDB at ${uri}`);
 }
 
 const client = new MongoClient(uri, { serverSelectionTimeoutMS: 10000 });

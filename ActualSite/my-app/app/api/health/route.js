@@ -9,6 +9,7 @@ export async function GET() {
   const started = Date.now();
   const settings = {
     MONGODB_URI: Boolean(process.env.MONGODB_URI),
+    LOCAL_MONGODB: !process.env.MONGODB_URI,
     SESSION_SECRET: Boolean(process.env.SESSION_SECRET),
     PASSWORD_PEPPER: Boolean(process.env.PASSWORD_PEPPER),
     RESEND_API_KEY: Boolean(process.env.RESEND_API_KEY),

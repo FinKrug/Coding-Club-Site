@@ -67,6 +67,13 @@ JUDGE0_URL=https://judge0.neumontcoding.club
 JUDGE0_AUTH_TOKEN=<ask a maintainer>
 ```
 
+> [!TIP]
+> **Local Database with Docker**: You can run a local MongoDB database and local IntelliSense gateway with:
+> ```bash
+> docker compose up -d
+> ```
+> The application and database scripts automatically connect to `mongodb://127.0.0.1:27017/coding-club` unless `MONGODB_URI` is explicitly configured.
+
 > [!NOTE]
 > For accounts, database, and Google sign-in configuration, see [Authentication & Database Guide](auth-and-database.md). The site will run without them, but authentication features will be disabled.
 

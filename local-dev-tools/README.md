@@ -1,15 +1,14 @@
-# Running IntelliSense locally
+# Running Local Dev Services (IntelliSense & MongoDB)
 
-This folder gives you a local copy of the language-server backend behind
-this site's "IntelliSense" — real completions, hovers and diagnostics for
-Python, C, C++, Rust, Go and Java, powered by `lsp-gateway`.
+This folder gives you a local Docker Compose setup that runs:
+1. **Local MongoDB** (`mongodb` on `localhost:27017`): A local database with persistent storage. The site automatically connects to this database (`mongodb://127.0.0.1:27017/coding-club`) unless `MONGODB_URI` is explicitly configured.
+2. **Local IntelliSense Gateway** (`lsp-gateway` on `ws://localhost:3001`): Language servers providing real completions, hovers, and diagnostics for Python, C, C++, Rust, Go, and Java.
 
 Run it on your own laptop, then flip the **Local IntelliSense** toggle in
 the site's **Run Settings** (the gear icon in the navbar) to point the
 site at your machine instead of our hosted gateway. Nothing here is
 required to use the site normally — this is only for people who want to
-run their own IntelliSense backend, e.g. because they're offline or are
-hacking on the gateway itself.
+run their own backend tools or work offline.
 
 > **Where did local Judge0 (the code runner) go?** An earlier version of
 > this bundle also let you self-host Judge0, the sandbox that actually
