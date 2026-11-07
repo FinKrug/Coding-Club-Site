@@ -186,7 +186,7 @@ function hexUtf8(token) {
   if (token === "-") return "";
   if (!/^(?:[0-9a-fA-F]{2})*$/.test(token)) throw new Error("bad string token");
   const bytes = new Uint8Array(token.length / 2);
-  for (let i = 0; i < bytes.length; i += 1) bytes[i] = parseInt(token.substr(i * 2, 2), 16);
+  for (let i = 0; i < bytes.length; i += 1) bytes[i] = parseInt(token.slice(i * 2, i * 2 + 2), 16);
   return new TextDecoder().decode(bytes);
 }
 

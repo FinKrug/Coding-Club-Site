@@ -76,9 +76,13 @@ export async function verifyPassword(password, stored) {
   if (parts.length !== 4 || parts[0] !== "pbkdf2-sha256") return { ok: false, needsRehash: false };
   const iterations = Number(parts[1]);
   if (!Number.isInteger(iterations) || iterations < 1) return { ok: false, needsRehash: false };
-  const hash = await derive(password, fromBase64(parts[2]), iterations);
-  const ok = constantTimeEqual(hash, fromBase64(parts[3]));
-  return { ok, needsRehash: ok && iterations !== ITERATIONS };
+  try {
+    const hash = await derive(password, fromBase64(parts[2]), iterations);
+    const ok = constantTimeEqual(hash, fromBase64(parts[3]));
+    return { ok, needsRehash: ok && iterations !== ITERATIONS };
+  } catch {
+    return { ok: false, needsRehash: false };
+  }
 }
 
 // Spends the same time as a real check, so "no such account" and "wrong

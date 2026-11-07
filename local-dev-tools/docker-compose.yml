@@ -1,25 +1,29 @@
-# Local dev stack: just the site's lsp-gateway (IntelliSense backend),
-# listening on localhost so the site's Run Settings can point at it instead
-# of our hosted gateway.
-#
-# This used to also run a self-hosted Judge0 (the code runner). That's been
-# removed — Judge0's sandboxing needs the legacy cgroup v1 hierarchy, and
-# WSL2 dropped support for it entirely as of WSL version 2.5.1, so it
-# simply can't run under Docker on Windows anymore (Docker Desktop or a
-# native Docker Engine install, it makes no difference — see README.md for
-# the full story). "Run Code" on the site always uses our hosted Judge0
-# now; that's unrelated to IntelliSense, which doesn't use cgroups at all.
+# Local dev stack:
+# 1. mongodb: Local MongoDB instance (mongo:7) running on port 27017 with persistent volume
+# 2. lsp-gateway: Language server gateway for local IntelliSense on port 3001
 #
 # Usage (from this directory):
 #   docker compose up -d --build
 #
-# The gateway comes up on ws://localhost:3001. See README.md in this folder
-# for the full walkthrough.
+# The site automatically defaults to this local MongoDB instance (mongodb://127.0.0.1:27017/coding-club)
+# unless MONGODB_URI is explicitly configured in .env.local or the environment.
 
 services:
+  mongodb:
+    image: mongo:7
+    container_name: coding-club-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
   lsp-gateway:
     build:
       context: ../lsp-gateway
     ports:
       - "3001:3001"
     restart: unless-stopped
+
+volumes:
+  mongodb_data:

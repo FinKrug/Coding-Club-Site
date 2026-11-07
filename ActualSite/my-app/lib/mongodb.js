@@ -12,14 +12,12 @@ import { MongoClient } from "mongodb";
 // few hundred ms of connection setup per request, which is fine for a club
 // site; batch related queries into a single withDb() call to only pay it once.
 //
+export const DEFAULT_LOCAL_MONGODB_URI = "mongodb://127.0.0.1:27017/coding-club";
+
 // Server-only: never import this from a "use client" component.
 export async function withDb(fn) {
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    throw new Error(
-      "MONGODB_URI is not set. See the 'Accounts & Database' section of the README."
-    );
-  }
+  // Uses MONGODB_URI if configured; otherwise falls back to local Docker MongoDB.
+  const uri = process.env.MONGODB_URI || DEFAULT_LOCAL_MONGODB_URI;
 
   const client = new MongoClient(uri, {
     maxPoolSize: 1,

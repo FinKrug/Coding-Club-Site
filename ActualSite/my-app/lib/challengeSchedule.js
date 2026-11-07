@@ -1,5 +1,5 @@
-import schedule from "@/data/challengeSchedule";
-import { addDays, clubToday } from "@/lib/clubTime";
+import schedule from "../data/challengeSchedule.js";
+import { addDays, clubToday } from "./clubTime.js";
 
 // When challenges unlock. Two ways to schedule one:
 //   1. `releaseDate: "YYYY-MM-DD"` on the challenge itself (wins if set), or

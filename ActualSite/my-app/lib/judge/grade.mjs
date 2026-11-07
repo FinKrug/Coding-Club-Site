@@ -43,6 +43,7 @@ function randomNonce() {
 export class GradingError extends Error {}
 
 export function clampTimeLimit(seconds) {
+  if (seconds == null) return 2;
   const value = Number(seconds);
   if (!Number.isFinite(value)) return 2;
   return Math.min(10, Math.max(1, value));
