@@ -1,4 +1,6 @@
 // Settings for the club fair page (/fair).
+import siteInfo from "./siteInfo";
+
 const fairInfo = {
   // The on/off switch for everything fair-related. While it's false:
   //   - /fair is a 404 (so old QR codes lead nowhere),
@@ -15,9 +17,8 @@ const fairInfo = {
 
   // The club's Discord invite. Meeting times, events and announcements all
   // live there, so every "find out more" link on the fair page points here.
-  // Use an invite that never expires (Discord: Invite People -> Edit invite
-  // link -> Expire after: Never).
-  discordUrl: "https://discord.gg/kxv3FAP7k7",
+  // Change it in data/siteInfo.js.
+  discordUrl: siteInfo.discordUrl,
 };
 
 export default fairInfo;

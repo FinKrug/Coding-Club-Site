@@ -483,6 +483,14 @@ section.info-block li {
   margin-bottom: 0.4rem;
 }
 
+/* Join Our Discord on the home page */
+section.discord-block a.btn-primary {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--color-on-accent);
+  text-decoration: none;
+}
+
 /* Upcoming Events on the home page (components/NextMeeting.js) */
 section.info-block .event-name {
   display: block;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import NextMeeting from "@/components/NextMeeting";
 import fairInfo from "@/data/fairInfo";
+import siteInfo from "@/data/siteInfo";
 
 export default function Home() {
   return (
@@ -47,6 +48,25 @@ export default function Home() {
           algorithms, work on projects, and prepare for technical interviews.
         </p>
       </section>
+
+      {siteInfo.discordUrl && (
+        <section className="info-block discord-block">
+          <h2>Join Our Discord</h2>
+          <p>
+            Meeting times, events and announcements are all posted in the
+            club Discord. It&apos;s also the place to ask for help with a
+            challenge or show off what you&apos;re building.
+          </p>
+          <a
+            href={siteInfo.discordUrl}
+            className="btn-primary"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Join the Discord
+          </a>
+        </section>
+      )}
 
       <section className="info-block">
         <h2>Upcoming Events</h2>

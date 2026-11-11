@@ -2,6 +2,7 @@ import { Barlow_Condensed, Inter } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import siteInfo from "@/data/siteInfo";
 
 const headingFont = Barlow_Condensed({
   subsets: ["latin"],
@@ -31,6 +32,11 @@ export default function RootLayout({ children }) {
         <footer className="site-footer">
           Neumont Coding Club — Learn. Build. Compete.
           <div className="footer-links">
+            {siteInfo.discordUrl && (
+              <a href={siteInfo.discordUrl} target="_blank" rel="noopener noreferrer">
+                Discord
+              </a>
+            )}
             <Link href="/privacy">Privacy Policy</Link>
             <Link href="/terms">Terms of Service</Link>
           </div>
